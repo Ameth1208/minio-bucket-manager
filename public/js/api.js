@@ -1,4 +1,11 @@
 export const api = {
+    login: async (username, password) => 
+        (await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        })).json(),
+
     list: async () => (await fetch('/api/buckets')).json(),
     
     listObjects: async (name, prefix = '') => 

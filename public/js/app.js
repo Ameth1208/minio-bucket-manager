@@ -5,10 +5,14 @@ import { store } from './store.js';
 import { renderBuckets } from './components/BucketList.js';
 import { openExplorer, closeExplorer, navigateExplorer, downloadFile } from './components/Explorer.js';
 import { openDeleteModal, closeDeleteModal, openPreview, closePreview } from './components/Modals.js';
+import { initLoginForm } from './components/LoginForm.js';
 
 // --- Main App Logic ---
 
 async function loadData(spinner = true) {
+    // Only load data if we are on the manager page (check for bucketList element)
+    if (!document.getElementById('bucketList')) return;
+
     if(spinner) { 
         document.getElementById('loader').classList.remove('hidden'); 
         document.getElementById('bucketList').classList.add('hidden'); 
@@ -69,16 +73,29 @@ window.app = {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initLanguage();
-    loadData();
+    
+    // Check if we are on Login Page or Manager Page
+    if (document.getElementById('loginForm')) {
+        initLoginForm();
+    } else {
+        loadData();
+    }
 
-    // Event Listeners
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    document.getElementById('logoutBtn').addEventListener('click', api.logout);
-    document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
-    document.getElementById('createBucketForm').addEventListener('submit', createBucket);
+    // Common Event Listeners
+    const themeToggle = document.getElementById('themeToggle');
+    if(themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if(logoutBtn) logoutBtn.addEventListener('click', api.logout);
+
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if(confirmBtn) confirmBtn.addEventListener('click', confirmDelete);
+
+    const createForm = document.getElementById('createBucketForm');
+    if(createForm) createForm.addEventListener('submit', createBucket);
     
     // Listen for language changes to re-render
     window.addEventListener('languageChanged', () => {
-        renderBuckets(store.buckets);
+        if(store.buckets.length > 0) renderBuckets(store.buckets);
     });
 });

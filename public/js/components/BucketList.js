@@ -41,22 +41,60 @@ export function renderBuckets(buckets) {
                 <h3 class="font-bold text-slate-900 dark:text-white truncate font-mono text-sm tracking-tight">${b.name}</h3>
                 <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1 opacity-60">${new Date(b.creationDate).toLocaleDateString(lang)}</p>
             </div>
-            <div class="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-dark-800">
-                <span class="text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded bg-slate-50 dark:bg-dark-800 ${b.isPublic ? 'text-green-500 border border-green-500/20' : 'text-amber-500 border border-amber-500/20'}">
-                    ${b.isPublic ? t.publicAccess : t.privateAccess}
-                </span>
-                <div class="relative inline-block w-9 h-5 align-middle select-none">
-                    <input type="checkbox" id="toggle-${b.name}" 
-                    class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 border-slate-200 dark:border-dark-700 appearance-none cursor-pointer transition-all duration-300 top-0.5 left-0.5 shadow-sm" ${b.isPublic ? 'checked' : ''}/>
-                    <label for="toggle-${b.name}" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-100 dark:bg-dark-800 cursor-pointer transition-colors border border-slate-200 dark:border-dark-700"></label>
-                </div>
-            </div>
-        `;
-        list.appendChild(card);
-        
-        card.querySelector(`#toggle-${b.name}`).addEventListener('change', async (e) => {
-            const res = await api.updatePolicy(b.name, e.target.checked);
-            if(res.error) showToast(res.error, 'error'); else { showToast(t.toastUpdated); window.app.loadData(false); }
-        });
+                        <div class="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-dark-800">
+                            <span class="text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded bg-slate-50 dark:bg-dark-800 ${b.isPublic ? 'text-green-500' : 'text-amber-500'}">
+                                ${b.isPublic ? t.publicAccess : t.privateAccess}
+                            </span>
+                            
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-${b.name}" class="sr-only peer" ${b.isPublic ? 'checked' : ''}>
+                                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-dark-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-rose-500"></div>
+                            </label>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                    
+                    // Robust Switch Logic
+                    const toggle = card.querySelector(`#toggle-${b.name}`);
+        if (toggle) {
+            toggle.addEventListener('change', async (e) => {
+                const checkbox = e.target;
+                const newState = checkbox.checked;
+                const originalState = !newState; // To revert if fails
+                
+                // Optimistic UI: disable input while processing
+                checkbox.disabled = true;
+                checkbox.parentElement.classList.add('opacity-50');
+
+                try {
+                    console.log(`Switching bucket ${b.name} to ${newState ? 'Public' : 'Private'}`);
+                    const res = await api.updatePolicy(b.name, newState);
+                    
+                    if (res.error) {
+                        throw new Error(res.error);
+                    }
+                    
+                    showToast(t.toastUpdated);
+                    // Update global store state to match
+                    const bucketInStore = store.buckets.find(bucket => bucket.name === b.name);
+                    if (bucketInStore) bucketInStore.isPublic = newState;
+                    
+                    // Re-render to update UI text (Public/Private label)
+                    // We call renderBuckets again but we don't want to lose focus/scroll, 
+                    // so ideally we just update the text in this card.
+                    // For simplicity in this modular arch, we can re-render or just update DOM classes locally.
+                    // Let's re-render to ensure consistency.
+                    window.app.loadData(false); 
+
+                } catch (err) {
+                    console.error('Switch error:', err);
+                    showToast(err.message || 'Update failed', 'error');
+                    checkbox.checked = originalState; // Revert visual state
+                } finally {
+                    checkbox.disabled = false;
+                    checkbox.parentElement.classList.remove('opacity-50');
+                }
+            });
+        }
     });
 }

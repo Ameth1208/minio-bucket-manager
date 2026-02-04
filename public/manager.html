@@ -18,13 +18,25 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="https://api.iconify.design/simple-icons:minio.svg?color=%23f43f5e">
     <link rel="stylesheet" href="css/style.css">
     <style>
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark ::-webkit-scrollbar-thumb { background: #334155; }
-        .toggle-checkbox:checked { right: 0; border-color: #e11d48; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #e11d48; }
+        
+        /* Switch Logic */
+        .toggle-checkbox:checked {
+            transform: translateX(1.1rem); /* Moves ~18px right */
+            border-color: #e11d48;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #fecdd3; /* Rose-200 background when active */
+        }
+        .dark .toggle-checkbox:checked + .toggle-label {
+            background-color: rgba(225, 29, 72, 0.3); /* Dark mode active bg */
+        }
+        
         .theme-transition { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
         .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -35,9 +47,10 @@
     <!-- Navbar -->
     <nav class="bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-dark-800 sticky top-0 z-40">
         <div class="container mx-auto px-4 md:px-6 py-3.5 flex justify-between items-center">
+            <!-- Logo Clean -->
             <div class="flex items-center gap-2.5">
-                <div class="bg-rose-500 p-2 rounded-xl text-white">
-                    <iconify-icon icon="ph:hexagon-bold" width="20"></iconify-icon>
+                <div class="bg-rose-500 p-2 rounded-xl text-white flex items-center justify-center">
+                    <iconify-icon icon="simple-icons:minio" width="20"></iconify-icon>
                 </div>
                 <div class="flex flex-col">
                     <span class="text-base font-bold dark:text-white leading-tight">MinIO</span>
