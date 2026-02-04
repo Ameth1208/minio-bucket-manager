@@ -23,6 +23,7 @@ export class MinioManager {
   async listBucketsWithStatus() {
     try {
       const buckets = await this.client.listBuckets();
+      console.log(`🔍 Found ${buckets.length} buckets in MinIO.`);
       
       const bucketInfos = await Promise.all(buckets.map(async (bucket) => {
         let isPublic = false;
@@ -93,6 +94,22 @@ export class MinioManager {
   async deleteBucket(bucketName: string) {
     // MinIO only allows deleting empty buckets via removeBucket
     await this.client.removeBucket(bucketName);
+  }
+
+  async listObjects(bucketName: string, prefix: string = ''): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const objects: any[] = [];
+      // listObjectsV2 is better for folders (grouping by delimiter)
+      const stream = this.client.listObjectsV2(bucketName, prefix, false, ''); 
+      stream.on('data', (obj) => objects.push(obj));
+      stream.on('error', (err) => reject(err));
+      stream.on('end', () => resolve(objects));
+    });
+  }
+
+  async getPresignedUrl(bucketName: string, objectName: string): Promise<string> {
+    // URL valid for 1 hour
+    return await this.client.presignedGetObject(bucketName, objectName, 3600);
   }
 }
 

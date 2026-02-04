@@ -1,245 +1,371 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MinIO Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { dark: { 950: '#020617', 900: '#0f172a', 800: '#1e293b', 700: '#334155' } }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #10B981; /* Green-500 */
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #10B981;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        .toggle-checkbox:checked { right: 0; border-color: #e11d48; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #e11d48; }
+        .theme-transition { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
+<body class="bg-[#fcfcfd] dark:bg-dark-950 text-slate-800 dark:text-slate-200 theme-transition min-h-screen flex flex-col font-sans">
 
     <!-- Navbar -->
-    <nav class="bg-slate-900 text-white shadow-lg">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <!-- Simple Logo Icon -->
-                <svg class="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-                    <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
-                </svg>
-                <span class="text-xl font-bold tracking-wide">MinIO <span class="text-red-400 font-light">Manager</span></span>
+    <nav class="bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-dark-800 sticky top-0 z-40">
+        <div class="container mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-rose-500 p-2 rounded-xl">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline><polyline points="7.5 19.79 12 17.19 16.5 19.79"></polyline><polyline points="12 12 12 22"></polyline><polyline points="12 12 2 7"></polyline><polyline points="12 12 22 7"></polyline></svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-base font-bold dark:text-white leading-tight">MinIO</span>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Console</span>
+                </div>
             </div>
-            <button id="logoutBtn" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors duration-200">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Logout
-            </button>
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="relative" id="langMenu">
+                    <button onclick="toggleLangMenu()" class="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-lg px-2.5 py-1.5 transition-all text-xs font-bold border border-transparent hover:border-slate-200 dark:hover:border-dark-700"><iconify-icon id="currentFlag" icon="flagpack:us" width="18"></iconify-icon><span id="currentLangLabel" class="text-slate-600 dark:text-slate-300">EN</span></button>
+                    <div id="langDropdown" class="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-800 rounded-xl shadow-xl border border-slate-200 dark:border-dark-700 hidden py-1.5 z-50">
+                        <!-- Lang Options generated by JS -->
+                        <button onclick="setLanguage('en')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-700 text-sm"><iconify-icon icon="flagpack:us" width="18"></iconify-icon> English</button>
+                        <button onclick="setLanguage('es')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-700 text-sm"><iconify-icon icon="flagpack:es" width="18"></iconify-icon> Español</button>
+                        <button onclick="setLanguage('fr')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-700 text-sm"><iconify-icon icon="flagpack:fr" width="18"></iconify-icon> Français</button>
+                    </div>
+                </div>
+                <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors text-slate-500 dark:text-slate-400"><iconify-icon icon="ph:moon-bold" class="dark:hidden" width="20"></iconify-icon><iconify-icon icon="ph:sun-bold" class="hidden dark:block text-yellow-400" width="20"></iconify-icon></button>
+                <button id="logoutBtn" class="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-rose-600 transition-colors" data-i18n="logout">Logout</button>
+            </div>
         </div>
     </nav>
 
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
-        
-        <!-- Header & Create Action -->
-        <div class="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
+    <main class="container mx-auto px-4 md:px-6 py-10 flex-grow max-w-6xl">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
             <div>
-                <h1 class="text-3xl font-bold text-slate-800">Buckets</h1>
-                <p class="text-slate-500 mt-1">Manage your storage containers and access policies.</p>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-1 tracking-tight" data-i18n="title">Storage Buckets</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm" data-i18n="subtitle">Manage visibility and lifecycle.</p>
             </div>
-            
-            <form id="createBucketForm" class="flex gap-2 w-full md:w-auto shadow-sm">
-                <input type="text" id="newBucketName" placeholder="New bucket name..." required 
-                    class="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
-                <button type="submit" 
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-r-lg transition-colors flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Create
-                </button>
+            <form id="createBucketForm" class="w-full lg:w-auto flex bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-800 p-1 group focus-within:border-rose-500/50 transition-all shadow-sm">
+                <input type="text" id="newBucketName" placeholder="bucket-name" required class="bg-transparent text-slate-900 dark:text-white w-full lg:w-64 px-4 py-2 focus:outline-none font-mono text-sm">
+                <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase px-6 py-2.5 rounded-lg transition-all shadow-lg shadow-rose-600/10" data-i18n="create">Create</button>
             </form>
         </div>
 
-        <!-- Content Area -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
-                            <th class="p-4">Name</th>
-                            <th class="p-4">Created At</th>
-                            <th class="p-4 text-center">Visibility</th>
-                            <th class="p-4 text-center">Access</th>
-                            <th class="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bucketList" class="divide-y divide-slate-100 text-sm">
-                        <tr><td colspan="5" class="p-8 text-center text-slate-400">Loading buckets...</td></tr>
-                    </tbody>
-                </table>
+        <div id="loader" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"><div class="bg-white dark:bg-dark-900 h-40 rounded-xl animate-pulse"></div><div class="bg-white dark:bg-dark-900 h-40 rounded-xl animate-pulse"></div></div>
+        <div id="bucketList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-slate-200 dark:border-dark-800 rounded-xl"><iconify-icon icon="ph:cube-transparent-thin" width="64" class="text-slate-300 mb-4"></iconify-icon><h3 class="text-lg font-bold" data-i18n="emptyTitle">No buckets</h3></div>
+    </main>
+
+    <!-- Explorer Modal -->
+    <div id="explorerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onclick="closeExplorer()"></div>
+        <!-- Max Width Changed to 5xl, Rounded XL -->
+        <div class="relative bg-white dark:bg-dark-900 w-full max-w-5xl rounded-xl shadow-2xl border border-slate-200 dark:border-dark-800 flex flex-col max-h-[85vh] overflow-hidden">
+            
+            <div class="p-5 border-b border-slate-100 dark:border-dark-800 flex justify-between items-center bg-slate-50/50 dark:bg-dark-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-500 p-2 rounded-lg text-white"><iconify-icon icon="ph:folder-open-bold" width="20"></iconify-icon></div>
+                    <div class="flex flex-col">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="explorerTitle">Files</h3>
+                        <!-- Breadcrumbs -->
+                        <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-mono overflow-x-auto whitespace-nowrap">
+                            <span class="cursor-pointer hover:text-indigo-500" onclick="navigateExplorer('')">root</span>
+                            <span id="breadcrumbs"></span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeExplorer()" class="text-slate-400 hover:text-rose-500 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors"><iconify-icon icon="ph:x-bold" width="20"></iconify-icon></button>
+            </div>
+
+            <!-- List -->
+            <div class="flex-grow overflow-y-auto p-4" id="fileList"></div>
+
+            <div class="p-3 border-t border-slate-100 dark:border-dark-800 bg-white dark:bg-dark-900 flex justify-between items-center text-xs text-slate-400">
+                <span data-i18n="readOnly">Secure Access</span>
+                <span id="fileCount">0 items</span>
             </div>
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50">
-        Notification
+    <!-- Preview Modal (Lightbox) -->
+    <div id="previewModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="closePreview()"></div>
+        <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col items-center">
+            <div class="w-full flex justify-end mb-4 gap-4">
+                <a id="previewDownloadBtn" href="#" target="_blank" class="text-white hover:text-indigo-400 flex items-center gap-2 text-sm font-bold bg-white/10 px-4 py-2 rounded-lg"><iconify-icon icon="ph:download-bold"></iconify-icon> Download</a>
+                <button onclick="closePreview()" class="text-white hover:text-rose-500 bg-white/10 px-3 py-2 rounded-lg"><iconify-icon icon="ph:x-bold" width="20"></iconify-icon></button>
+            </div>
+            <div id="previewContent" class="rounded-xl overflow-hidden shadow-2xl flex items-center justify-center w-full h-full">
+                <!-- Content injected here -->
+            </div>
+            <p id="previewName" class="text-slate-400 text-sm mt-4 font-mono"></p>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+        <div class="relative bg-white dark:bg-dark-900 w-full max-w-sm rounded-xl border border-slate-200 dark:border-dark-800 p-8 shadow-2xl">
+            <div class="bg-rose-100 dark:bg-rose-900/30 w-14 h-14 rounded-xl flex items-center justify-center text-rose-600 mb-6">
+                <iconify-icon icon="ph:trash-bold" width="28"></iconify-icon>
+            </div>
+            <h3 class="text-xl font-bold mb-2 dark:text-white" data-i18n="deleteTitle">Delete Bucket</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8"><span data-i18n="deleteConfirm">Confirm deletion?</span></p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 rounded-lg font-bold text-sm bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300" data-i18n="cancelBtn">Cancel</button>
+                <button id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 rounded-lg font-bold text-sm bg-rose-600 text-white">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transform transition-all duration-500 translate-y-20 opacity-0">
+        <div class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <div id="toastIcon"></div>
+            <span id="toastMessage" class="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-tight"></span>
+        </div>
     </div>
 
     <script>
-        // --- API Helpers ---
+        const translations = {
+            en: { title: "Storage Buckets", subtitle: "Manage visibility and lifecycle.", create: "Create", logout: "Logout", emptyTitle: "No buckets found", publicAccess: "Public", privateAccess: "Private", deleteTitle: "Delete Bucket", deleteConfirm: "Confirm deletion?", deleteBtn: "Delete", cancelBtn: "Cancel", explore: "Explore", toastCreated: "Bucket created", toastDeleted: "Bucket removed", toastUpdated: "Visibility updated", errorEmpty: "Bucket not empty or error", readOnly: "Secure Access" },
+            es: { title: "Buckets", subtitle: "Gestión de almacenamiento.", create: "Crear", logout: "Salir", emptyTitle: "Sin buckets", publicAccess: "Público", privateAccess: "Privado", deleteTitle: "Eliminar Bucket", deleteConfirm: "¿Eliminar bucket?", deleteBtn: "Eliminar", cancelBtn: "Cerrar", explore: "Explorar", toastCreated: "Bucket creado", toastDeleted: "Bucket eliminado", toastUpdated: "Visibilidad actualizada", errorEmpty: "El bucket no está vacío", readOnly: "Acceso Seguro" },
+            fr: { title: "Buckets", subtitle: "Gestion du stockage.", create: "Créer", logout: "Sortir", emptyTitle: "Aucun bucket", publicAccess: "Public", privateAccess: "Privé", deleteTitle: "Supprimer", deleteConfirm: "Supprimer?", deleteBtn: "Supprimer", cancelBtn: "Fermer", explore: "Explorer", toastCreated: "Bucket créé", toastDeleted: "Bucket supprimé", toastUpdated: "Visibilité mise à jour", errorEmpty: "Bucket non vide", readOnly: "Accès Sécurisé" }
+        };
+        // (Other langs omitted for brevity but logic works same)
+        
+        const flags = { en: 'flagpack:us', es: 'flagpack:es', fr: 'flagpack:fr', pt: 'flagpack:br', ja: 'flagpack:jp', zh: 'flagpack:cn' };
+        let currentLang = localStorage.getItem('lang') || 'en';
+        let bucketsData = [];
+        let bucketToDelete = null;
+        let currentBucket = null;
+        let currentPrefix = '';
+
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        }
+        function toggleTheme() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
+        function toggleLangMenu() { document.getElementById('langDropdown').classList.toggle('hidden'); }
+        window.onclick = (e) => { if (!e.target.closest('#langMenu')) document.getElementById('langDropdown').classList.add('hidden'); }
+        function setLanguage(lang) {
+            currentLang = lang; localStorage.setItem('lang', lang);
+            document.getElementById('currentFlag').setAttribute('icon', flags[lang]);
+            document.getElementById('currentLangLabel').innerText = lang.toUpperCase();
+            document.getElementById('langDropdown').classList.add('hidden');
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    if(el.tagName === 'INPUT') el.placeholder = translations[lang][key]; else el.innerText = translations[lang][key];
+                }
+            });
+            if(bucketsData.length > 0) renderBuckets(bucketsData);
+        }
+
         const api = {
-            list: async () => {
-                const res = await fetch('/api/buckets');
-                if (res.status === 401) window.location.href = '/login';
-                return res.json();
-            },
-            create: async (name) => {
-                const res = await fetch('/api/buckets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-                return res.json();
-            },
-            updatePolicy: async (name, isPublic) => {
-                const res = await fetch(`/api/buckets/${name}/policy`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ public: isPublic })
-                });
-                return res.json();
-            },
-            delete: async (name) => {
-                const res = await fetch(`/api/buckets/${name}`, {
-                    method: 'DELETE'
-                });
-                return res.json();
-            },
-            logout: async () => {
-                await fetch('/api/logout', { method: 'POST' });
-                window.location.href = '/login';
-            }
+            list: async () => (await fetch('/api/buckets')).json(),
+            listObjects: async (name, prefix = '') => (await fetch(`/api/buckets/${name}/objects?prefix=${encodeURIComponent(prefix)}`)).json(),
+            getUrl: async (bucket, file) => (await fetch(`/api/buckets/${bucket}/objects/${encodeURIComponent(file)}/url`)).json(),
+            create: async (name) => (await fetch('/api/buckets', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name }) })).json(),
+            updatePolicy: async (name, pub) => (await fetch(`/api/buckets/${name}/policy`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ public: pub }) })).json(),
+            delete: async (name) => (await fetch(`/api/buckets/${name}`, { method: 'DELETE' })).json(),
+            logout: async () => { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
         };
 
-        // --- UI Logic ---
-        function showToast(message, isError = false) {
+        function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
-            toast.innerText = message;
-            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-xl transform transition-all duration-300 z-50 ${isError ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`;
+            document.getElementById('toastMessage').innerText = msg;
+            document.getElementById('toastIcon').innerHTML = `<iconify-icon icon="${type === 'success' ? 'solar:check-circle-bold' : 'solar:danger-bold'}" class="${type === 'success' ? 'text-green-500' : 'text-rose-500'}" width="22"></iconify-icon>`;
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
 
         function renderBuckets(buckets) {
             const list = document.getElementById('bucketList');
+            const t = translations[currentLang] || translations['en'];
+            document.getElementById('loader').classList.add('hidden');
             list.innerHTML = '';
-            
-            if (buckets.length === 0) {
-                list.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">No buckets found. Create one to get started.</td></tr>';
-                return;
-            }
+            if (!Array.isArray(buckets) || buckets.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); list.classList.add('hidden'); return; }
+            document.getElementById('emptyState').classList.add('hidden'); list.classList.remove('hidden');
 
-            buckets.forEach(bucket => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors group";
-                
-                const date = new Date(bucket.creationDate).toLocaleString();
-                
-                const visibilityBadge = bucket.isPublic 
-                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11.055a9.003 9.003 0 0117.89 0m-17.89 0a9.003 9.003 0 0017.89 0m-17.89 0c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm17.89 0c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Public
-                       </span>`
-                    : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        Private
-                       </span>`;
-
-                tr.innerHTML = "`
-                    <td class=\"p-4 font-medium text-slate-700\">${bucket.name}</td>
-                    <td class=\"p-4 text-slate-500\">${date}</td>
-                    <td class=\"p-4 text-center\">${visibilityBadge}</td>
-                    <td class=\"p-4 text-center\">
-                         <div class=\"relative inline-block w-12 mr-2 align-middle select-none\">
-                            <input type=\"checkbox\" id=\"toggle-${bucket.name}\" class=\"toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 ease-in-out top-0 left-0\" ${bucket.isPublic ? 'checked' : ''}/>
-                            <label for=\"toggle-${bucket.name}\" class=\"toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300 ease-in-out\"></label>
+            buckets.forEach(b => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-dark-900 rounded-xl p-5 border border-slate-200 dark:border-dark-800 transition-all hover:border-rose-500/30 group";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="aspect-square w-12 flex items-center justify-center bg-slate-50 dark:bg-dark-800 rounded-xl text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300">
+                            <iconify-icon icon="ph:package-duotone" width="24"></iconify-icon>
                         </div>
-                    </td>
-                    <td class=\"p-4 text-right\">
-                        <button onclick=\"handleDelete('${bucket.name}')\" class=\"text-slate-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50\" title=\"Delete Bucket\">
-                            <svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16\"></path></svg>
-                        </button>
-                    </td>
+                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openExplorer('${b.name}')" class="p-2 text-slate-400 hover:text-indigo-500 transition-colors"><iconify-icon icon="ph:magnifying-glass-bold" width="20"></iconify-icon></button>
+                            <button onclick="openDeleteModal('${b.name}')" class="p-2 text-slate-400 hover:text-rose-500 transition-colors"><iconify-icon icon="ph:trash-simple-bold" width="20"></iconify-icon></button>
+                        </div>
+                    </div>
+                    <div class="mb-5">
+                        <h3 class="font-bold text-slate-900 dark:text-white truncate font-mono text-sm tracking-tight">${b.name}</h3>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1 opacity-60">${new Date(b.creationDate).toLocaleDateString(currentLang)}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-dark-800">
+                        <span class="text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded bg-slate-50 dark:bg-dark-800 ${b.isPublic ? 'text-green-500' : 'text-amber-500'}">${b.isPublic ? t.publicAccess : t.privateAccess}</span>
+                        <div class="relative inline-block w-9 h-5 align-middle select-none">
+                            <input type="checkbox" id="toggle-${b.name}" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 border-slate-200 dark:border-dark-700 appearance-none cursor-pointer transition-all duration-300 top-0.5 left-0.5" ${b.isPublic ? 'checked' : ''}/>
+                            <label for="toggle-${b.name}" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-100 dark:bg-dark-800 cursor-pointer transition-colors border border-slate-200 dark:border-dark-700"></label>
+                        </div>
+                    </div>
                 `;
-                
-                list.appendChild(tr);
-
-                // Event Listener for Toggle
-                const toggle = tr.querySelector(`#toggle-${bucket.name}`);
-                toggle.addEventListener('change', async (e) => {
-                    const isChecked = e.target.checked;
-                    try {
-                        const res = await api.updatePolicy(bucket.name, isChecked);
-                        if (res.error) throw new Error(res.error);
-                        showToast(`Bucket is now ${isChecked ? 'Public' : 'Private'}`);
-                        loadData(); // Refresh to update badges
-                    } catch (err) {
-                        showToast(err.message || 'Error updating policy', true);
-                        e.target.checked = !isChecked; // Revert
-                    }
+                list.appendChild(card);
+                card.querySelector(`#toggle-${b.name}`).addEventListener('change', async (e) => {
+                    const res = await api.updatePolicy(b.name, e.target.checked);
+                    if(res.error) showToast(res.error, 'error'); else { showToast(t.toastUpdated); loadData(false); }
                 });
             });
         }
 
-        async function loadData() {
-            try {
-                const buckets = await api.list();
-                renderBuckets(buckets);
-            } catch (err) {
-                console.error(err);
-                showToast('Failed to load buckets', true);
-            }
+        async function openExplorer(name) {
+            currentBucket = name;
+            currentPrefix = '';
+            document.getElementById('explorerTitle').innerText = name;
+            document.getElementById('explorerModal').classList.remove('hidden');
+            await navigateExplorer('');
         }
 
-        window.handleDelete = async (name) => {
-            if(!confirm(`Are you sure you want to delete bucket "${name}"?\nThis action cannot be undone.`)) return;
+        async function navigateExplorer(prefix) {
+            currentPrefix = prefix;
+            const list = document.getElementById('fileList');
+            const bread = document.getElementById('breadcrumbs');
+            
+            // Breadcrumbs
+            const parts = prefix.split('/').filter(p => p);
+            let path = '';
+            bread.innerHTML = parts.map(p => {
+                path += p + '/';
+                return ` <span class="text-slate-300">/</span> <span class="cursor-pointer hover:text-indigo-500" onclick="navigateExplorer('${path}')">${p}</span>`;
+            }).join('');
+
+            list.innerHTML = '<div class="text-center py-12 text-slate-400"><iconify-icon icon="line-md:loading-twotone-loop" width="32"></iconify-icon></div>';
             
             try {
-                const res = await api.delete(name);
-                if (res.error) throw new Error(res.error);
-                showToast(`Bucket "${name}" deleted`);
-                loadData();
-            } catch (err) {
-                // MinIO returns generic errors often, check if not empty
-                if(err.message.includes('not empty')) {
-                    showToast('Cannot delete: Bucket is not empty.', true);
-                } else {
-                    showToast(err.message || 'Failed to delete bucket', true);
+                const items = await api.listObjects(currentBucket, currentPrefix);
+                list.innerHTML = '';
+                document.getElementById('fileCount').innerText = `${items.length} items`;
+                
+                // Back Button
+                if(currentPrefix !== '') {
+                    const parent = currentPrefix.split('/').slice(0, -2).join('/');
+                    const parentPath = parent ? parent + '/' : '';
+                    const back = document.createElement('div');
+                    back.className = "flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-dark-800 rounded-xl cursor-pointer text-slate-500 mb-2 border border-transparent hover:border-slate-200 dark:hover:border-dark-700";
+                    back.innerHTML = `<div class="aspect-square w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-dark-800 rounded-xl"><iconify-icon icon="ph:arrow-u-up-left-bold" width="20"></iconify-icon></div> <span class="text-sm font-bold">..</span>`;
+                    back.onclick = () => navigateExplorer(parentPath);
+                    list.appendChild(back);
                 }
-            }
+
+                if(!items.length) { list.innerHTML += '<div class="text-center py-12 text-slate-400 text-sm font-medium">Empty folder</div>'; return; }
+
+                // Folders
+                items.filter(i => i.prefix).forEach(f => {
+                    const el = document.createElement('div');
+                    el.className = "flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-dark-800 rounded-xl cursor-pointer group transition-colors border border-transparent hover:border-slate-200 dark:hover:border-dark-700 mb-1";
+                    el.onclick = () => navigateExplorer(f.prefix);
+                    el.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <div class="aspect-square w-10 h-10 flex items-center justify-center bg-amber-100 dark:bg-amber-900/20 text-amber-500 rounded-xl">
+                                <iconify-icon icon="ph:folder-fill" width="20"></iconify-icon>
+                            </div>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200 font-mono">${f.prefix.replace(currentPrefix, '').replace('/','')}</span>
+                        </div>
+                        <iconify-icon icon="ph:caret-right-bold" class="text-slate-300"></iconify-icon>
+                    `;
+                    list.appendChild(el);
+                });
+
+                // Files
+                items.filter(i => !i.prefix).forEach(f => {
+                    const size = (f.size / 1024).toFixed(1) + ' KB';
+                    const name = f.name.replace(currentPrefix, '');
+                    const el = document.createElement('div');
+                    el.className = "flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-dark-800 rounded-xl group transition-colors border border-transparent hover:border-slate-200 dark:hover:border-dark-700 mb-1";
+                    el.innerHTML = `
+                        <div class="flex items-center gap-4 overflow-hidden">
+                            <div class="aspect-square w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-dark-800 text-slate-400 rounded-xl">
+                                <iconify-icon icon="ph:file-text-duotone" width="20"></iconify-icon>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate font-mono">${name}</span>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase">${size}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="previewFile('${currentBucket}', '${f.name}')" class="p-2 text-slate-400 hover:text-indigo-500 bg-white dark:bg-dark-700 rounded-lg border border-slate-200 dark:border-dark-600 shadow-sm" title="Preview">
+                                <iconify-icon icon="ph:eye-bold" width="18"></iconify-icon>
+                            </button>
+                            <button onclick="downloadFile('${currentBucket}', '${f.name}')" class="p-2 text-slate-400 hover:text-green-500 bg-white dark:bg-dark-700 rounded-lg border border-slate-200 dark:border-dark-600 shadow-sm" title="Download">
+                                <iconify-icon icon="ph:download-simple-bold" width="18"></iconify-icon>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(el);
+                });
+
+            } catch (err) { list.innerHTML = '<div class="text-center py-12 text-rose-500 text-sm">Error</div>'; }
         }
 
-        // --- Init ---
-        document.getElementById('logoutBtn').addEventListener('click', api.logout);
-        
-        document.getElementById('createBucketForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('newBucketName');
-            const name = input.value.trim();
-            if(!name) return;
-            
+        async function previewFile(bucket, file) {
             try {
-                const res = await api.create(name);
-                if (res.error) throw new Error(res.error);
-                input.value = '';
-                showToast(`Bucket "${name}" created successfully`);
-                loadData();
-            } catch (err) {
-                showToast(err.message || 'Failed to create bucket', true);
-            }
-        });
+                const { url } = await api.getUrl(bucket, file);
+                const ext = file.split('.').pop().toLowerCase();
+                const content = document.getElementById('previewContent');
+                const name = document.getElementById('previewName');
+                const btn = document.getElementById('previewDownloadBtn');
+                
+                name.innerText = file;
+                btn.href = url;
+                
+                if(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+                    content.innerHTML = `<img src="${url}" class="max-w-full max-h-full object-contain rounded-lg">`;
+                } else if (['mp4', 'webm'].includes(ext)) {
+                    content.innerHTML = `<video src="${url}" controls class="max-w-full max-h-full rounded-lg"></video>`;
+                } else if (ext === 'pdf') {
+                    content.innerHTML = `<iframe src="${url}" class="w-full h-full rounded-lg border-0"></iframe>`;
+                } else {
+                    content.innerHTML = `<div class="flex flex-col items-center gap-4 p-10 bg-white dark:bg-dark-800 rounded-2xl"><iconify-icon icon="ph:file-dashed-duotone" width="64" class="text-slate-300"></iconify-icon><p class="text-slate-500">No preview available for this file type.</p></div>`;
+                }
+                
+                document.getElementById('previewModal').classList.remove('hidden');
+            } catch(e) { showToast('Preview failed', 'error'); }
+        }
 
-        loadData();
+        function closePreview() { document.getElementById('previewModal').classList.add('hidden'); document.getElementById('previewContent').innerHTML = ''; }
+        async function downloadFile(bucket, file) { try { const { url } = await api.getUrl(bucket, file); window.open(url, '_blank'); } catch (err) { showToast("Download failed", 'error'); } }
+        function closeExplorer() { document.getElementById('explorerModal').classList.add('hidden'); }
+        function openDeleteModal(name) { bucketToDelete = name; document.getElementById('modalBucketName').innerText = name; document.getElementById('deleteModal').classList.remove('hidden'); }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); bucketToDelete = null; }
+        
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme(); setLanguage(currentLang); loadData();
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('logoutBtn').addEventListener('click', api.logout);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => { const res = await api.delete(bucketToDelete); if (res.error) showToast(translations[currentLang].errorEmpty, 'error'); else { showToast(translations[currentLang].toastDeleted); loadData(); } closeDeleteModal(); });
+            document.getElementById('createBucketForm').addEventListener('submit', async (e) => { e.preventDefault(); const res = await api.create(document.getElementById('newBucketName').value.trim()); if (res.error) showToast(res.error, 'error'); else { document.getElementById('newBucketName').value = ''; showToast(translations[currentLang].toastCreated); loadData(); } });
+        });
     </script>
 </body>
 </html>

@@ -55,6 +55,28 @@ app.get('/api/buckets', requireAuth, async (req, res) => {
     }
 });
 
+app.get('/api/buckets/:name/objects', requireAuth, async (req, res) => {
+    try {
+        const name = req.params.name as string;
+        const prefix = req.query.prefix as string || '';
+        const objects = await minioManager.listObjects(name, prefix);
+        res.json(objects);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/buckets/:name/objects/:objectName/url', requireAuth, async (req, res) => {
+    try {
+        const name = req.params.name as string;
+        const objectName = req.params.objectName as string;
+        const url = await minioManager.getPresignedUrl(name, objectName);
+        res.json({ url });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/buckets', requireAuth, async (req, res) => {
     try {
         const { name } = req.body;
