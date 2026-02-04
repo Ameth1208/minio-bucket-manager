@@ -26,7 +26,7 @@ You don't need to clone the code. Just use `docker-compose`.
 ### 1. Create a `docker-compose.yml`
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   minio-manager:
@@ -72,18 +72,21 @@ Visit `http://localhost:3000`. Done! 🎉
 If you want to contribute or modify the code:
 
 1.  **Clone the repo:**
+
     ```bash
     git clone https://github.com/ameth1208/minio-bucket-manager.git
     cd minio-bucket-manager
     ```
 
 2.  **Install Dependencies:**
+
     ```bash
     npm install
     ```
 
 3.  **Run with MinIO (All-in-one):**
     This starts a local MinIO instance + the App.
+
     ```bash
     docker-compose up --build
     ```
@@ -103,23 +106,23 @@ If you want to contribute or modify the code:
 
 ## ⚙️ Configuration Variables
 
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `PORT` | App listening port | `3000` |
-| `ADMIN_USER` | Username for the Manager login | `admin` |
-| `ADMIN_PASS` | Password for the Manager login | `admin` |
-| `JWT_SECRET` | Secret to sign session tokens | `secret` |
-| `MINIO_ENDPOINT` | MinIO Host/IP (Do NOT include http://) | `localhost` |
-| `MINIO_PORT` | MinIO API Port | `9000` |
-| `MINIO_USE_SSL` | Set to `true` if MinIO uses HTTPS | `false` |
-| `MINIO_ACCESS_KEY` | MinIO Access Key | - |
-| `MINIO_SECRET_KEY` | MinIO Secret Key | - |
+| Variable           | Description                            | Default     |
+| :----------------- | :------------------------------------- | :---------- |
+| `PORT`             | App listening port                     | `3000`      |
+| `ADMIN_USER`       | Username for the Manager login         | `admin`     |
+| `ADMIN_PASS`       | Password for the Manager login         | `admin`     |
+| `JWT_SECRET`       | Secret to sign session tokens          | `secret`    |
+| `MINIO_ENDPOINT`   | MinIO Host/IP (Do NOT include http://) | `localhost` |
+| `MINIO_PORT`       | MinIO API Port                         | `9000`      |
+| `MINIO_USE_SSL`    | Set to `true` if MinIO uses HTTPS      | `false`     |
+| `MINIO_ACCESS_KEY` | MinIO Access Key                       | -           |
+| `MINIO_SECRET_KEY` | MinIO Secret Key                       | -           |
 
 ---
 
 ## 📦 CI/CD
 
-This repo includes a **GitHub Action** that automatically builds and publishes the Docker image to **GitHub Container Registry (GHCR)** on every push to `master`.
+This repo includes a **GitHub Action** that automatically builds and publishes the Docker image to **GitHub Container Registry (GHCR)** on every push to `main`.
 
 ---
 
