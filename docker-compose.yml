@@ -1,30 +1,44 @@
+
 services:
   app:
     build: .
+    container_name: minio-manager
     ports:
-      - "${PORT:-3000}:3000"
-    env_file:
-      - .env
+      - "3000:3000"
     environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
-      - MINIO_PORT=${MINIO_PORT:-9000}
+      - PORT=3000
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-admin}
+      - JWT_SECRET=${JWT_SECRET:-secret_jwt_key}
+      - MINIO_ENDPOINT=minio-server
+      - MINIO_PORT=9000
+      - MINIO_USE_SSL=false
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
     depends_on:
-      - minio
+      - minio-server
+    networks:
+      - minio-net
     restart: unless-stopped
 
-  # Local MinIO instance for testing purposes
-  # If you have an external MinIO, you can remove this service and update .env
-  minio:
+  minio-server:
     image: minio/minio
+    container_name: minio-server
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - minio_data:/data
+    networks:
+      - minio-net
 
 volumes:
   minio_data:
+
+networks:
+  minio-net:
+    driver: bridge
