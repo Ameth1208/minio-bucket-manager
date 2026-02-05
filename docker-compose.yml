@@ -1,8 +1,8 @@
-
 services:
   app:
     build: .
-    container_name: minio-manager
+    image: atlas-bucket-manager:local
+    container_name: atlas-manager
     ports:
       - "3000:3000"
     environment:
@@ -10,15 +10,24 @@ services:
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASS=${ADMIN_PASS:-admin}
       - JWT_SECRET=${JWT_SECRET:-secret_jwt_key}
+      # Local Provider
       - MINIO_ENDPOINT=minio-server
       - MINIO_PORT=9000
       - MINIO_USE_SSL=false
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_REGION=${MINIO_REGION:-us-east-1}
+      # AWS S3 Provider
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_S3_ENDPOINT=${AWS_S3_ENDPOINT:-s3.amazonaws.com}
+      - AWS_S3_PORT=${AWS_S3_PORT:-443}
+      - AWS_S3_USE_SSL=${AWS_S3_USE_SSL:-true}
     depends_on:
       - minio-server
     networks:
-      - minio-net
+      - atlas-net
     restart: unless-stopped
 
   minio-server:
@@ -32,13 +41,13 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
-      - minio_data:/data
+      - atlas_data:/data
     networks:
-      - minio-net
+      - atlas-net
 
 volumes:
-  minio_data:
+  atlas_data:
 
 networks:
-  minio-net:
+  atlas-net:
     driver: bridge

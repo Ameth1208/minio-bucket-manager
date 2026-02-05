@@ -1,121 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - MinIO Manager</title>
+    <title>Login | Atlas Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script>
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: { dark: { 950: '#020617', 900: '#0f172a', 800: '#1e293b' } },
-                    animation: { 'fade-in': 'fadeIn 0.2s ease-out' },
-                    keyframes: { fadeIn: { '0%': { opacity: '0', transform: 'translateY(-5px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { dark: { 950: '#020617', 900: '#0f172a', 800: '#1e293b', 700: '#334155' } }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" href="https://api.iconify.design/simple-icons:minio.svg?color=%23f43f5e">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .toggle-password-icon { cursor: pointer; transition: color 0.2s; }
-        .toggle-password-icon:hover { color: #e11d48; }
+        .theme-transition { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
     </style>
 </head>
-<body class="bg-[#fcfcfd] dark:bg-dark-950 flex flex-col min-h-screen text-slate-800 dark:text-slate-200 font-sans selection:bg-rose-500/30 transition-colors duration-300">
-
-    <!-- Top Bar -->
-    <nav class="absolute top-0 right-0 w-full p-6 flex justify-end gap-3 z-10">
-        <!-- Lang Menu -->
-        <div class="relative" id="langMenu">
-            <button onclick="toggleLangMenu()" class="flex items-center gap-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 hover:border-slate-300 dark:hover:border-dark-700 rounded-lg px-3 py-2 transition-all shadow-sm">
-                <iconify-icon id="currentFlag" icon="flagpack:us" width="18"></iconify-icon>
-                <span id="currentLangLabel" class="text-xs font-bold text-slate-600 dark:text-slate-300">EN</span>
-            </button>
-            <div id="langDropdown" class="absolute right-0 mt-2 w-40 bg-white dark:bg-dark-900 rounded-xl shadow-xl border border-slate-200 dark:border-dark-800 hidden py-1.5 overflow-hidden animate-fade-in">
-                <button onclick="window.app.setLanguage('en')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-800 text-sm"><iconify-icon icon="flagpack:us" width="18"></iconify-icon> English</button>
-                <button onclick="window.app.setLanguage('es')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-800 text-sm"><iconify-icon icon="flagpack:es" width="18"></iconify-icon> Español</button>
-                <button onclick="window.app.setLanguage('pt')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-800 text-sm"><iconify-icon icon="flagpack:br" width="18"></iconify-icon> Português</button>
-                <button onclick="window.app.setLanguage('fr')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-800 text-sm"><iconify-icon icon="flagpack:fr" width="18"></iconify-icon> Français</button>
-                <button onclick="window.app.setLanguage('ja')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-800 text-sm"><iconify-icon icon="flagpack:jp" width="18"></iconify-icon> 日本語</button>
-                <button onclick="window.app.setLanguage('zh')" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-dark-800 text-sm"><iconify-icon icon="flagpack:cn" width="18"></iconify-icon> 中文</button>
-            </div>
-        </div>
-
-        <!-- Theme Toggle -->
-        <button id="themeToggle" class="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 hover:border-slate-300 dark:hover:border-dark-700 p-2 rounded-lg transition-all shadow-sm text-slate-500 dark:text-yellow-400">
+<body class="bg-[#fcfcfd] dark:bg-dark-950 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col font-sans theme-transition">
+    
+    <nav class="p-6 flex justify-end items-center gap-4">
+        <div id="langSelectorContainer"></div>
+        <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors">
             <iconify-icon icon="ph:moon-bold" class="dark:hidden" width="20"></iconify-icon>
             <iconify-icon icon="ph:sun-bold" class="hidden dark:block text-yellow-400" width="20"></iconify-icon>
         </button>
     </nav>
 
-    <!-- Content -->
-    <div class="flex-grow flex items-center justify-center p-4">
+    <div class="flex-grow flex items-center justify-center p-4 -mt-12">
         <div class="w-full max-w-sm">
-            
-            <!-- Logo Header -->
-            <div class="flex flex-col items-center mb-10">
-                <div class="bg-rose-500 p-4 rounded-2xl mb-5 shadow-xl shadow-rose-500/20 transform hover:scale-105 transition-transform duration-300 text-white flex items-center justify-center">
+            <div class="text-center mb-8">
+                <div class="bg-rose-500 w-16 h-16 rounded-3xl text-white inline-flex items-center justify-center shadow-xl shadow-rose-500/20 mb-6">
                     <iconify-icon icon="simple-icons:minio" width="32"></iconify-icon>
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white" data-i18n="welcome">MinIO Manager</h1>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="subtitle">Sign in to manage your storage</p>
+                <h1 class="text-2xl font-bold dark:text-white mb-1" data-i18n="loginTitle">Atlas Manager</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm" data-i18n="loginSubtitle">Manage visibility and lifecycle.</p>
             </div>
 
-            <!-- Login Card -->
-            <form id="loginForm" class="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-3xl p-8 shadow-sm">
-                
-                <div class="space-y-6">
+            <form id="loginForm" class="bg-white dark:bg-dark-900 p-8 rounded-[2rem] border border-slate-200 dark:border-dark-800 shadow-sm">
+                <div class="space-y-5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2" for="username" data-i18n="username">
-                            Username
-                        </label>
-                        <input class="w-full bg-slate-50 dark:bg-dark-950 border border-slate-200 dark:border-dark-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-rose-500 dark:focus:border-rose-500 transition-colors" 
-                            id="username" type="text" placeholder="admin" required>
+                        <label class="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1" data-i18n="username">Username</label>
+                        <input type="text" id="username" required placeholder="admin" class="w-full px-4 py-3 bg-slate-50 dark:bg-dark-800 border-none rounded-2xl focus:ring-2 focus:ring-rose-500/20 outline-none transition-all dark:text-white text-sm font-medium">
                     </div>
-                    
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2" for="password" data-i18n="password">
-                            Password
-                        </label>
+                        <label class="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1" data-i18n="password">Password</label>
                         <div class="relative">
-                            <input class="w-full bg-slate-50 dark:bg-dark-950 border border-slate-200 dark:border-dark-800 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:outline-none focus:border-rose-500 dark:focus:border-rose-500 transition-colors" 
-                                id="password" type="password" placeholder="••••••••" required>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 z-10 cursor-pointer">
-                                <iconify-icon id="togglePassword" icon="solar:eye-closed-bold" class="text-slate-400 toggle-password-icon hover:text-rose-500 transition-colors" width="20"></iconify-icon>
-                            </div>
+                            <input type="password" id="password" required placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 dark:bg-dark-800 border-none rounded-2xl focus:ring-2 focus:ring-rose-500/20 outline-none transition-all dark:text-white text-sm font-medium pr-12">
+                            <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-rose-500 transition-colors">
+                                <iconify-icon id="togglePassword" icon="solar:eye-closed-bold" width="20"></iconify-icon>
+                            </button>
                         </div>
                     </div>
-                </div>
+                    
+                    <div id="errorMsg" class="hidden flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl border border-rose-100 dark:border-rose-900/30">
+                        <iconify-icon icon="solar:danger-bold" width="18"></iconify-icon>
+                        <span id="errorText">Invalid credentials</span>
+                    </div>
 
-                <div class="mt-8">
-                    <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-rose-600/20" data-i18n="signin">
+                    <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-rose-600/20 transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2" data-i18n="loginBtn">
                         Sign In
                     </button>
                 </div>
-
-                <!-- Error Message -->
-                <div id="errorMsg" class="mt-6 flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm justify-center bg-rose-50 dark:bg-rose-900/20 py-2.5 px-3 rounded-xl border border-rose-100 dark:border-rose-900/30 hidden animate-fade-in">
-                    <iconify-icon icon="solar:danger-circle-bold" width="18"></iconify-icon>
-                    <span id="errorText">Invalid credentials</span>
-                </div>
-
             </form>
 
-            <p class="text-center text-slate-400 dark:text-slate-600 text-xs mt-8">
-                &copy; 2026 MinIO Manager. Secure Access.
+            <p class="text-center mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
+                &copy; 2026 Ameth Galarcio. All rights reserved.
             </p>
         </div>
     </div>
 
-    <!-- Main Script Module -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transform transition-all duration-500 translate-y-20 opacity-0">
+        <div class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <div id="toastIcon"></div>
+            <span id="toastMessage" class="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-tight"></span>
+        </div>
+    </div>
+
     <script type="module" src="js/app.js"></script>
-    <script>
-        function toggleLangMenu() { document.getElementById('langDropdown').classList.toggle('hidden'); }
-    </script>
 </body>
 </html>

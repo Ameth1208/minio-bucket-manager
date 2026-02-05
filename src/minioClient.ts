@@ -2,114 +2,160 @@ import * as Minio from 'minio';
 import { config } from './config';
 
 export class MinioManager {
-  private client: Minio.Client;
+  private clients: Map<string, Minio.Client> = new Map();
+  private providerConfigs: Map<string, any> = new Map();
 
   constructor() {
-    console.log(`🔌 Initializing MinIO Client:`);
-    console.log(`   - Endpoint: ${config.minio.endPoint}`);
-    console.log(`   - Port: ${config.minio.port}`);
-    console.log(`   - SSL: ${config.minio.useSSL}`);
-    console.log(`   - AccessKey: ${config.minio.accessKey ? '******' : 'MISSING'}`);
-
-    this.client = new Minio.Client({
-      endPoint: config.minio.endPoint,
-      port: config.minio.port,
-      useSSL: config.minio.useSSL,
-      accessKey: config.minio.accessKey,
-      secretKey: config.minio.secretKey,
+    console.log(`🔌 Initializing Multi-Cloud Manager...`);
+    config.providers.forEach(p => {
+        console.log(`   - Adding Provider: ${p.name} (${p.id})`);
+        const client = new Minio.Client({
+            endPoint: p.endPoint,
+            port: p.port,
+            useSSL: p.useSSL,
+            accessKey: p.accessKey,
+            secretKey: p.secretKey,
+            region: p.region
+        });
+        this.clients.set(p.id, client);
+        this.providerConfigs.set(p.id, p);
     });
   }
 
-  async listBucketsWithStatus() {
-    try {
-      const buckets = await this.client.listBuckets();
-      console.log(`🔍 Found ${buckets.length} buckets in MinIO.`);
-      
-      const bucketInfos = await Promise.all(buckets.map(async (bucket) => {
-        let isPublic = false;
-        try {
-            const policyStr = await this.client.getBucketPolicy(bucket.name);
-            if (policyStr) {
-                const policy = JSON.parse(policyStr);
-                // Check simplistic "Read Only" public pattern
-                const hasPublicRead = policy.Statement?.some((stmt: any) => 
-                    stmt.Effect === 'Allow' && 
-                    stmt.Principal?.AWS?.includes('*') &&
-                    stmt.Action?.includes('s3:GetObject')
-                );
-                isPublic = !!hasPublicRead;
-            }
-        } catch (err) {
-            // If error (e.g. NoSuchBucketPolicy), assume private
-            isPublic = false;
-        }
-
-        return {
-            name: bucket.name,
-            creationDate: bucket.creationDate,
-            isPublic
-        };
-      }));
-
-      return bucketInfos;
-    } catch (error) {
-      console.error('Error listing buckets:', error);
-      throw error;
-    }
+  private getClient(providerId: string): Minio.Client {
+    const client = this.clients.get(providerId);
+    if (!client) throw new Error(`Provider ${providerId} not found`);
+    return client;
   }
 
-  async createBucket(bucketName: string) {
-    // Check if exists
-    const exists = await this.client.bucketExists(bucketName);
-    if (exists) {
-      throw new Error(`Bucket ${bucketName} already exists.`);
+  async listBucketsWithStatus() {
+    const allBuckets: any[] = [];
+    
+    for (const [id, client] of this.clients.entries()) {
+        try {
+            const buckets = await client.listBuckets();
+            const providerName = this.providerConfigs.get(id).name;
+
+            const bucketInfos = await Promise.all(buckets.map(async (bucket) => {
+                let isPublic = false;
+                try {
+                    const policyStr = await client.getBucketPolicy(bucket.name);
+                    if (policyStr) {
+                        const policy = JSON.parse(policyStr);
+                        isPublic = policy.Statement?.some((stmt: any) => 
+                            stmt.Effect === 'Allow' && 
+                            stmt.Principal?.AWS?.includes('*') &&
+                            stmt.Action?.includes('s3:GetObject')
+                        );
+                    }
+                } catch { isPublic = false; }
+
+                return {
+                    name: bucket.name,
+                    creationDate: bucket.creationDate,
+                    isPublic,
+                    providerId: id,
+                    providerName
+                };
+            }));
+            allBuckets.push(...bucketInfos);
+        } catch (err) {
+            console.error(`Error listing buckets for ${id}:`, err);
+        }
     }
-    await this.client.makeBucket(bucketName, 'us-east-1'); // Region is mandatory but often ignored by MinIO default
+    return allBuckets;
+  }
+
+  async getBucketStats(providerId: string, bucketName: string) {
+    const client = this.getClient(providerId);
+    return new Promise((resolve, reject) => {
+        let size = 0;
+        let count = 0;
+        const stream = client.listObjectsV2(bucketName, '', true);
+        stream.on('data', (obj) => {
+            size += obj.size || 0;
+            count++;
+        });
+        stream.on('error', (err) => reject(err));
+        stream.on('end', () => resolve({ size, count }));
+    });
+  }
+
+  async createBucket(providerId: string, bucketName: string) {
+    const client = this.getClient(providerId);
+    const conf = this.providerConfigs.get(providerId);
+    await client.makeBucket(bucketName, conf.region);
     return true;
   }
 
-  async setBucketVisibility(bucketName: string, makePublic: boolean) {
+  async setBucketVisibility(providerId: string, bucketName: string, makePublic: boolean) {
+    const client = this.getClient(providerId);
     if (makePublic) {
       const policy = {
         Version: "2012-10-17",
-        Statement: [
-          {
+        Statement: [{
             Effect: "Allow",
             Principal: { AWS: ["*"] },
             Action: ["s3:GetObject"],
             Resource: [`arn:aws:s3:::${bucketName}/*`]
-          }
-        ]
+        }]
       };
-      await this.client.setBucketPolicy(bucketName, JSON.stringify(policy));
+      await client.setBucketPolicy(bucketName, JSON.stringify(policy));
     } else {
-      // To make private, we simply remove the policy (or set empty)
-      // MinIO client api has setBucketPolicy with empty string usually working to clear, 
-      // or we can just send an empty statement policy. 
-      // Safest for "Private" is usually clearing it.
-      await this.client.setBucketPolicy(bucketName, "");
+      await client.setBucketPolicy(bucketName, "");
     }
   }
 
-  async deleteBucket(bucketName: string) {
-    // MinIO only allows deleting empty buckets via removeBucket
-    await this.client.removeBucket(bucketName);
+  async deleteBucket(providerId: string, bucketName: string) {
+    await this.getClient(providerId).removeBucket(bucketName);
   }
 
-  async listObjects(bucketName: string, prefix: string = ''): Promise<any[]> {
+  async listObjects(providerId: string, bucketName: string, prefix: string = ''): Promise<any[]> {
+    const client = this.getClient(providerId);
     return new Promise((resolve, reject) => {
       const objects: any[] = [];
-      // listObjectsV2 is better for folders (grouping by delimiter)
-      const stream = this.client.listObjectsV2(bucketName, prefix, false, ''); 
+      const stream = client.listObjectsV2(bucketName, prefix, false, ''); 
       stream.on('data', (obj) => objects.push(obj));
       stream.on('error', (err) => reject(err));
       stream.on('end', () => resolve(objects));
     });
   }
 
-  async getPresignedUrl(bucketName: string, objectName: string): Promise<string> {
-    // URL valid for 1 hour
-    return await this.client.presignedGetObject(bucketName, objectName, 3600);
+  async uploadFile(providerId: string, bucketName: string, objectName: string, filePath: string) {
+    await this.getClient(providerId).fPutObject(bucketName, objectName, filePath);
+    return true;
+  }
+
+  async deleteObjects(providerId: string, bucketName: string, objectNames: string[]) {
+    await this.getClient(providerId).removeObjects(bucketName, objectNames);
+  }
+
+  async searchObjects(query: string) {
+    const results: any[] = [];
+    for (const [id, client] of this.clients.entries()) {
+        const buckets = await client.listBuckets();
+        await Promise.all(buckets.map(async (bucket) => {
+            return new Promise<void>((resolve) => {
+                const stream = client.listObjectsV2(bucket.name, '', true);
+                stream.on('data', (obj) => {
+                    if (obj.name && obj.name.toLowerCase().includes(query.toLowerCase())) {
+                        results.push({ ...obj, bucket: bucket.name, providerId: id });
+                    }
+                });
+                stream.on('error', () => resolve());
+                stream.on('end', () => resolve());
+            });
+        }));
+    }
+    return results;
+  }
+
+  async getPresignedUrl(providerId: string, bucketName: string, objectName: string, expiry: number = 3600): Promise<string> {
+    return await this.getClient(providerId).presignedGetObject(bucketName, objectName, expiry);
+  }
+
+  async getObjectStream(providerId: string, bucketName: string, objectName: string) {
+    return await this.getClient(providerId).getObject(bucketName, objectName);
   }
 }
 

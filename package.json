@@ -1,25 +1,33 @@
 {
-  "name": "minio-bucket-manager",
-  "version": "0.0.1",
-  "description": "Lightweight and secure MinIO bucket management interface.",
+  "name": "atlas-bucket-manager",
+  "version": "1.0.0",
+  "description": "Multi-Cloud Storage Manager for Buckets (MinIO & S3).",
   "main": "dist/server.js",
   "author": "Ameth Galarcio <https://amethgm.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ameth1208/minio-bucket-manager.git"
+    "url": "git+https://github.com/ameth1208/atlas-bucket-manager.git"
   },
   "bugs": {
-    "url": "https://github.com/ameth1208/minio-bucket-manager/issues"
+    "url": "https://github.com/ameth1208/atlas-bucket-manager/issues"
   },
-  "homepage": "https://github.com/ameth1208/minio-bucket-manager#readme",
+  "homepage": "https://github.com/ameth1208/atlas-bucket-manager#readme",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "s3",
+    "minio",
+    "bucket",
+    "manager",
+    "storage",
+    "multi-cloud",
+    "aws"
+  ],
   "type": "commonjs",
   "dependencies": {
     "cookie-parser": "^1.4.7",
@@ -27,13 +35,15 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "minio": "^8.0.6"
+    "minio": "^8.0.6",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^1.4.12",
     "@types/node": "^25.2.0",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",

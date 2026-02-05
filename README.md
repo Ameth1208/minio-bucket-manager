@@ -1,27 +1,45 @@
-# 🪣 MinIO Bucket Manager
+# 🪣 Atlas Bucket Manager
 
-> The missing UI for managing MinIO bucket visibility and public access policies easily.
+> A high-performance, unified Multi-Cloud UI for managing S3-compatible storage (MinIO, AWS S3, R2, Spaces).
 
-![MinIO Manager](https://via.placeholder.com/1200x600?text=MinIO+Manager+Dashboard+Preview)
+![Atlas Manager](https://via.placeholder.com/1200x600?text=Atlas+Bucket+Manager+v1.0.0)
 
-A lightweight, secure, and modern web interface to manage your MinIO storage. Toggle **Public/Private** access, explore files, and manage buckets without dealing with complex JSON policies or CLI commands.
+Atlas is a lightweight, secure, and modern web interface designed to bridge the gap between local development and cloud production. Manage visibility, explore files, and perform global searches across all your storage providers in one unified place.
 
 ---
 
-## ✨ Features
+## ✨ Multi-Cloud Features
 
-- **🚀 Instant Access Control**: Toggle buckets between **Public** (Read-only) and **Private** with a simple switch.
-- **📂 File Explorer**: Browse folders, preview images/videos, and download files securely using presigned URLs.
-- **🔐 Secure**: JWT-based authentication. No direct exposure of MinIO admin ports required.
-- **🎨 Modern UI**: "Glassmorphism" design, Dark/Light mode, and fully responsive.
-- **🌍 Multi-language**: 🇺🇸 English, 🇪🇸 Español, 🇧🇷 Portugués, 🇫🇷 Français, 🇯🇵 日本語, 🇨🇳 中文.
-- **🐳 Docker Ready**: Zero-config deployment using GitHub Container Registry.
+- **🌐 Unified Dashboard**: View buckets from Local MinIO and AWS S3 in a single view with provider-specific badges.
+- **🔍 Global Search**: Search for any file across **all buckets and all providers** at the same time.
+- **🛡️ Secure Preview Tunnel**: Preview private images, videos, audio (with integrated player), and PDFs through an internal proxy. No need to expose ports or deal with CORS.
+- **📤 Bulk Operations**: Support for multi-file upload and bulk deletion.
+- **🔗 Smart Share Links**: Generate temporary download links with custom expiration (1m to 7 days).
+- **📊 Storage Stats**: Instant calculation of total size and object count per bucket.
+- **🌍 Multi-language**: 🇺🇸 EN, 🇪🇸 ES, 🇧🇷 PT, 🇫🇷 FR, 🇯🇵 JP, 🇨🇳 ZH.
+- **🌗 Modern UI**: Fully persistent Dark/Light mode and mobile-responsive design.
+
+---
+
+## 🔌 Supported Providers
+
+### Available Now (v1.0.0) ✅
+- **MinIO** (Local or Self-hosted)
+- **AWS S3** (Amazon Web Services)
+- **Cloudflare R2**
+- **DigitalOcean Spaces**
+- **Wasabi Hot Cloud Storage**
+- **Any S3-Compatible API**
+
+### Coming Soon (Roadmap) 🚀
+- **Google Cloud Storage (GCS)**
+- **Azure Blob Storage**
+- **Backblaze B2**
+- **Oracle Cloud Storage**
 
 ---
 
 ## 🚀 Quick Start (Production)
-
-You don't need to clone the code. Just use `docker-compose`.
 
 ### 1. Create a `docker-compose.yml`
 
@@ -29,9 +47,9 @@ You don't need to clone the code. Just use `docker-compose`.
 version: "3.8"
 
 services:
-  minio-manager:
-    image: ghcr.io/ameth1208/minio-bucket-manager:latest
-    container_name: minio-manager
+  atlas-manager:
+    image: ghcr.io/ameth1208/atlas-bucket-manager:latest
+    container_name: atlas-manager
     ports:
       - "3000:3000"
     env_file:
@@ -41,20 +59,22 @@ services:
 
 ### 2. Configure Credentials (`.env`)
 
-Create a `.env` file in the same directory:
-
 ```bash
-# App Access Credentials (You choose these)
+# App Credentials
 ADMIN_USER=admin
-ADMIN_PASS=supersecretpassword
-JWT_SECRET=change_this_to_something_random
+ADMIN_PASS=password
+JWT_SECRET=random_secret_here
 
-# Your Existing MinIO Server Connection
+# Provider 1: Local MinIO
 MINIO_ENDPOINT=minio.example.com
 MINIO_PORT=9000
-MINIO_USE_SSL=true
-MINIO_ACCESS_KEY=your_minio_access_key
-MINIO_SECRET_KEY=your_minio_secret_key
+MINIO_ACCESS_KEY=your_key
+MINIO_SECRET_KEY=your_secret
+
+# Provider 2: AWS S3 (Optional)
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_REGION=us-east-1
 ```
 
 ### 3. Run
@@ -63,66 +83,15 @@ MINIO_SECRET_KEY=your_minio_secret_key
 docker-compose up -d
 ```
 
-Visit `http://localhost:3000`. Done! 🎉
+Visit `http://localhost:3000`. 🎉
 
 ---
 
-## 🛠️ Development (Local)
+## 🛠️ Development
 
-If you want to contribute or modify the code:
-
-1.  **Clone the repo:**
-
-    ```bash
-    git clone https://github.com/ameth1208/minio-bucket-manager.git
-    cd minio-bucket-manager
-    ```
-
-2.  **Install Dependencies:**
-
-    ```bash
-    npm install
-    ```
-
-3.  **Run with MinIO (All-in-one):**
-    This starts a local MinIO instance + the App.
-
-    ```bash
-    docker-compose up --build
-    ```
-
-    - **App:** `http://localhost:3000`
-    - **MinIO Console:** `http://localhost:9001` (User: `minioadmin`, Pass: `minioadmin`)
-
-4.  **Run App Standalone (Node.js):**
-    ```bash
-    # Build frontend/backend
-    npm run build
-    # Start server
-    npm start
-    ```
-
----
-
-## ⚙️ Configuration Variables
-
-| Variable           | Description                            | Default     |
-| :----------------- | :------------------------------------- | :---------- |
-| `PORT`             | App listening port                     | `3000`      |
-| `ADMIN_USER`       | Username for the Manager login         | `admin`     |
-| `ADMIN_PASS`       | Password for the Manager login         | `admin`     |
-| `JWT_SECRET`       | Secret to sign session tokens          | `secret`    |
-| `MINIO_ENDPOINT`   | MinIO Host/IP (Do NOT include http://) | `localhost` |
-| `MINIO_PORT`       | MinIO API Port                         | `9000`      |
-| `MINIO_USE_SSL`    | Set to `true` if MinIO uses HTTPS      | `false`     |
-| `MINIO_ACCESS_KEY` | MinIO Access Key                       | -           |
-| `MINIO_SECRET_KEY` | MinIO Secret Key                       | -           |
-
----
-
-## 📦 CI/CD
-
-This repo includes a **GitHub Action** that automatically builds and publishes the Docker image to **GitHub Container Registry (GHCR)** on every push to `main`.
+1.  **Clone:** `git clone https://github.com/ameth1208/atlas-bucket-manager.git`
+2.  **Install:** `npm install`
+3.  **Build & Run:** `npm run build && npm start`
 
 ---
 
