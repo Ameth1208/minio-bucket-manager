@@ -2,7 +2,7 @@
 
 > A high-performance, unified Multi-Cloud UI for managing S3-compatible storage (MinIO, AWS S3, R2, Spaces).
 
-![Atlas Manager](https://via.placeholder.com/1200x600?text=Atlas+Bucket+Manager+v1.0.0)
+![Atlas Manager](https://via.placeholder.com/1200x600?text=Atlas+Bucket+Manager+v0.0.2)
 
 Atlas is a lightweight, secure, and modern web interface designed to bridge the gap between local development and cloud production. Manage visibility, explore files, and perform global searches across all your storage providers in one unified place.
 
@@ -23,7 +23,7 @@ Atlas is a lightweight, secure, and modern web interface designed to bridge the 
 
 ## 🔌 Supported Providers
 
-### Available Now (v1.0.0) ✅
+### Available Now (v0.0.2) ✅
 - **MinIO** (Local or Self-hosted)
 - **AWS S3** (Amazon Web Services)
 - **Cloudflare R2**
