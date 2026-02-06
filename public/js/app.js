@@ -6,6 +6,7 @@ import { renderBuckets } from './components/BucketList.js';
 import { openExplorer, closeExplorer, navigateExplorer, downloadFile, handleUpload, toggleSelect, bulkDelete, openUrlModal, closeUrlModal, generateShareLink } from './components/Explorer.js';
 import { openDeleteModal, closeDeleteModal, openPreview, closePreview } from './components/Modals.js';
 import { initLoginForm } from './components/LoginForm.js';
+import { renderSupportButton } from './components/SupportButton.js';
 
 // 1. Error Mapping
 function translateError(errorMsg) {
@@ -162,6 +163,7 @@ initTheme();
 document.addEventListener('DOMContentLoaded', () => {
     initLanguage();
     renderLanguageSelector('langSelectorContainer');
+    renderSupportButton();
     initSearch();
     if (document.getElementById('loginForm')) initLoginForm(); else loadData();
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);

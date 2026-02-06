@@ -18,7 +18,8 @@ export const translations = {
         loginTitle: "Atlas Manager", loginSubtitle: "Manage visibility and lifecycle.", loginBtn: "Sign In", username: "Username", password: "Password",
         errBucketExists: "The requested bucket name is not available.",
         errInvalidCredentials: "Invalid credentials.",
-        errGeneral: "An unexpected error occurred."
+        errGeneral: "An unexpected error occurred.",
+        supportBtn: "Support"
     },
     es: { 
         title: "Buckets", subtitle: "Gestión de almacenamiento.", create: "Crear", logout: "Salir", 
@@ -30,7 +31,8 @@ export const translations = {
         loginTitle: "Atlas Manager", loginSubtitle: "Gestión de visibilidad y ciclo de vida.", loginBtn: "Entrar", username: "Usuario", password: "Clave",
         errBucketExists: "El nombre del bucket no está disponible.",
         errInvalidCredentials: "Credenciales inválidas.",
-        errGeneral: "Ocurrió un error inesperado."
+        errGeneral: "Ocurrió un error inesperado.",
+        supportBtn: "Apoyar"
     },
     pt: { 
         title: "Buckets", subtitle: "Gestão eficiente de almacenamiento.", create: "Criar", logout: "Sair", 
@@ -42,7 +44,8 @@ export const translations = {
         loginTitle: "Atlas Manager", loginSubtitle: "Gestão de visibilidad e ciclo de vida.", loginBtn: "Entrar", username: "Usuário", password: "Senha",
         errBucketExists: "O nome do bucket não está disponible.",
         errInvalidCredentials: "Credenciais inválidas.",
-        errGeneral: "Ocorreu um erro inesperado."
+        errGeneral: "Ocorreu um erro inesperado.",
+        supportBtn: "Apoiar"
     },
     fr: { 
         title: "Buckets", subtitle: "Gestion du stockage.", create: "Créer", logout: "Sortir", 
@@ -54,7 +57,8 @@ export const translations = {
         loginTitle: "Atlas Manager", loginSubtitle: "Gérez la visibilité et le ciclo de vie.", loginBtn: "Connexion", username: "Utilisateur", password: "Mot de passe",
         errBucketExists: "Le nom du bucket n'est pas disponible.",
         errInvalidCredentials: "Identifiants invalides.",
-        errGeneral: "Une erreur inattendue est survenue."
+        errGeneral: "Une erreur inattendue est survenue.",
+        supportBtn: "Soutenir"
     },
     ja: { 
         title: "バケット", subtitle: "ストレージ管理。", create: "作成", logout: "終了", 
@@ -66,7 +70,8 @@ export const translations = {
         loginTitle: "Atlas Manager", loginSubtitle: "可視性とライフサイクルの管理。", loginBtn: "ログイン", username: "ユーザー名", password: "パスワード",
         errBucketExists: "リクエストされたバケット名は利用できません。",
         errInvalidCredentials: "資格情報が無効です。",
-        errGeneral: "予期しないエラーが発生しました。"
+        errGeneral: "予期しないエラーが発生しました。",
+        supportBtn: "支援する"
     },
     zh: { 
         title: "存储桶", subtitle: "存储管理。", create: "创建", logout: "退出", 
@@ -78,7 +83,8 @@ export const translations = {
         loginTitle: "Atlas Manager", loginSubtitle: "管理可见性和生命周期。", loginBtn: "登录", username: "用户名", password: "密码",
         errBucketExists: "请求的存储桶名称不可用。",
         errInvalidCredentials: "凭据无效。",
-        errGeneral: "发生了意外错误。"
+        errGeneral: "发生了意外错误。",
+        supportBtn: "支持"
     }
 };
 
