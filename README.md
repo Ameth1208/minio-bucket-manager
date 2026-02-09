@@ -10,7 +10,7 @@ Atlas is a lightweight, secure, and modern web interface designed to bridge the 
 
 ## ✨ Multi-Cloud Features
 
-- **🌐 Unified Dashboard**: View buckets from Local MinIO and AWS S3 in a single view with provider-specific badges.
+- **🌐 Unified Dashboard**: View buckets from MinIO and AWS S3 in a single view with provider-specific badges.
 - **🔍 Global Search**: Search for any file across **all buckets and all providers** at the same time.
 - **🛡️ Secure Preview Tunnel**: Preview private images, videos, audio (with integrated player), and PDFs through an internal proxy. No need to expose ports or deal with CORS.
 - **📤 Bulk Operations**: Support for multi-file upload and bulk deletion.
@@ -24,7 +24,7 @@ Atlas is a lightweight, secure, and modern web interface designed to bridge the 
 ## 🔌 Supported Providers
 
 ### Available Now (v0.0.3) ✅
-- **MinIO** (Local or Self-hosted)
+- **MinIO** (Amazon S3 compatible)
 - **AWS S3** (Amazon Web Services)
 - **Cloudflare R2**
 - **DigitalOcean Spaces**
@@ -65,7 +65,7 @@ ADMIN_USER=admin
 ADMIN_PASS=password
 JWT_SECRET=random_secret_here
 
-# Provider 1: Local MinIO
+# Provider 1: MinIO
 MINIO_ENDPOINT=minio.example.com
 MINIO_PORT=9000
 MINIO_ACCESS_KEY=your_key

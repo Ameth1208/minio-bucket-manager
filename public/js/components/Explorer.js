@@ -6,150 +6,164 @@ import { showToast } from '../utils.js';
 let selectedObjects = new Set();
 let shareTarget = null;
 
-export async function openExplorer(providerId, name) {
-    store.currentProviderId = providerId;
-    store.currentBucket = name;
-    store.currentPrefix = '';
-    document.getElementById('explorerTitle').innerText = name;
-    document.getElementById('explorerModal').classList.remove('hidden');
-    await navigateExplorer('');
+export async function openExplorer(providerId, name, prefix = '', isStandalone = false) {
+    try {
+        console.log(`🚀 openExplorer called for ${providerId}/${name}, prefix: "${prefix}", standalone: ${isStandalone}`);
+        
+        store.currentProviderId = providerId;
+        store.currentBucket = name;
+        store.currentPrefix = prefix;
+        store.isExplorerStandalone = isStandalone;
+        
+        // Hide search results if any
+        const searchResults = document.getElementById('searchResults');
+        if (searchResults) {
+            searchResults.classList.add('hidden');
+        }
+        const searchInput = document.getElementById('globalSearchInput');
+        if (searchInput) searchInput.value = '';
+
+        // Update UI
+        const titleEl = document.getElementById('explorerTitle');
+        if (titleEl) titleEl.innerText = name;
+        
+        // Switch Views if in Manager
+        const listView = document.getElementById('bucketListView');
+        const explorerView = document.getElementById('explorerView');
+        
+        if (!isStandalone) {
+            if (listView && explorerView) {
+                console.log('UI: Hiding list, showing explorer');
+                listView.classList.add('hidden');
+                explorerView.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                console.error('UI: Explorer view elements not found!');
+                showToast('UI Error: View elements missing', 'error');
+            }
+        }
+
+        const modalEl = document.getElementById('explorerModal');
+        if (modalEl) {
+            modalEl.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        // Update URL if needed
+        if (!isStandalone) {
+            const newPath = `/manager/${providerId}/${name}/files/${prefix}`;
+            if (window.location.pathname !== newPath && !window.location.pathname.startsWith('/explorer')) {
+                window.history.pushState({ providerId, name, prefix, type: 'explorer' }, '', newPath);
+            }
+        }
+
+        await renderExplorerContent();
+    } catch (err) {
+        console.error('Failed to open explorer:', err);
+        showToast('Failed to open explorer', 'error');
+    }
 }
 
 export function closeExplorer() {
-    document.getElementById('explorerModal').classList.add('hidden');
-}
-
-export async function downloadFile(providerId, bucket, file) {
-    try {
-        const { url } = await api.getUrl(providerId, bucket, file);
-        window.open(url, '_blank');
-    } catch (err) {
-        showToast("Download failed", 'error');
+    const modalEl = document.getElementById('explorerModal');
+    if (modalEl) {
+        modalEl.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
     }
-}
 
-export async function handleUpload(files) {
-    if(!files.length) return;
-    showToast(`Uploading ${files.length} files...`, 'info');
-    try {
-        await api.upload(store.currentProviderId, store.currentBucket, files, store.currentPrefix);
-        showToast("Upload successful", 'success');
-        await navigateExplorer(store.currentPrefix);
-    } catch (err) {
-        showToast("Upload failed", 'error');
-    }
-}
-
-export function toggleSelect(name, event) {
-    event.stopPropagation();
-    if(selectedObjects.has(name)) selectedObjects.delete(name);
-    else selectedObjects.add(name);
-    updateBulkDeleteUI();
-}
-
-function updateBulkDeleteUI() {
-    const btn = document.getElementById('bulkDeleteBtn');
-    if(selectedObjects.size > 0) {
-        btn.classList.remove('hidden');
-        btn.innerText = `Delete Selected (${selectedObjects.size})`;
-    } else {
-        btn.classList.add('hidden');
-    }
-}
-
-export async function bulkDelete() {
-    if(!selectedObjects.size) return;
-    if(!confirm(`Delete ${selectedObjects.size} objects?`)) return;
+    // Switch Views if in Manager
+    const listView = document.getElementById('bucketListView');
+    const explorerView = document.getElementById('explorerView');
     
-    showToast("Deleting...", 'info');
-    try {
-        await api.deleteObjects(store.currentProviderId, store.currentBucket, Array.from(selectedObjects));
-        selectedObjects.clear();
-        updateBulkDeleteUI();
-        showToast("Deleted successfully", 'success');
-        await navigateExplorer(store.currentPrefix);
-    } catch (err) {
-        showToast("Deletion failed", 'error');
+    if (listView && explorerView) {
+        if (!store.isExplorerStandalone) {
+            // Check if we are currently in an explorer path
+            const isExplorerPath = window.location.pathname.includes('/files/');
+            if (isExplorerPath) {
+                window.history.back();
+            } else {
+                listView.classList.remove('hidden');
+                explorerView.classList.add('hidden');
+                if (window.location.pathname !== '/manager') {
+                    window.history.pushState({ type: 'list' }, '', '/manager');
+                }
+            }
+        }
     }
-}
-
-export function openUrlModal(file) {
-    shareTarget = file;
-    document.getElementById('urlModal').classList.remove('hidden');
-}
-
-export function closeUrlModal() {
-    document.getElementById('urlModal').classList.add('hidden');
-}
-
-export async function generateShareLink() {
-    const expiry = document.getElementById('urlExpiry').value;
-    try {
-        const { url } = await api.getUrl(store.currentProviderId, store.currentBucket, shareTarget, expiry);
-        navigator.clipboard.writeText(url);
-        showToast("Link copied to clipboard!", 'success');
-        closeUrlModal();
-    } catch (err) {
-        showToast("Failed to generate link", 'error');
-    }
-}
-
-function getFileIcon(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    const map = {
-        // Images
-        'png': 'ph:image-duotone', 'jpg': 'ph:image-duotone', 'jpeg': 'ph:image-duotone', 'webp': 'ph:image-duotone', 'svg': 'ph:file-svg-duotone', 'gif': 'ph:gif-duotone',
-        // Videos
-        'mp4': 'ph:video-duotone', 'webm': 'ph:video-duotone', 'mov': 'ph:video-duotone', 'mkv': 'ph:video-duotone', 'avi': 'ph:video-duotone',
-        // Audio
-        'mp3': 'ph:music-notes-duotone', 'wav': 'ph:music-notes-duotone', 'ogg': 'ph:music-notes-duotone', 'flac': 'ph:music-notes-duotone', 'm4a': 'ph:music-notes-duotone',
-        // Apps & System
-        'apk': 'ph:android-logo-duotone', 'exe': 'ph:microsoft-windows-logo-duotone', 'msi': 'ph:microsoft-windows-logo-duotone', 'dmg': 'ph:apple-logo-duotone', 'app': 'ph:app-window-duotone',
-        // Documents
-        'pdf': 'ph:file-pdf-duotone', 'doc': 'ph:file-doc-duotone', 'docx': 'ph:file-doc-duotone', 'xls': 'ph:file-xls-duotone', 'xlsx': 'ph:file-xls-duotone', 'txt': 'ph:file-text-duotone',
-        // Archives
-        'zip': 'ph:file-archive-duotone', 'rar': 'ph:file-archive-duotone', '7z': 'ph:file-archive-duotone', 'gz': 'ph:file-archive-duotone', 'tar': 'ph:file-archive-duotone'
-    };
-    return map[ext] || 'ph:file-duotone';
-}
-
-function getIconStyles(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'].includes(ext)) return 'bg-purple-500/10 text-purple-500';
-    if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) return 'bg-rose-500/10 text-rose-500';
-    if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext)) return 'bg-cyan-500/10 text-cyan-500';
-    if (ext === 'pdf') return 'bg-red-500/10 text-red-500';
-    if (['zip', 'rar', '7z', 'gz'].includes(ext)) return 'bg-amber-500/10 text-amber-500';
-    if (ext === 'apk') return 'bg-green-500/10 text-green-500';
-    if (['exe', 'msi', 'dmg'].includes(ext)) return 'bg-blue-500/10 text-blue-500';
-    return 'bg-slate-500/10 text-slate-500';
 }
 
 export async function navigateExplorer(prefix) {
     store.currentPrefix = prefix;
+    
+    // Update URL
+    if (store.isExplorerStandalone) {
+        // We don't change the path in standalone explorer yet to avoid reloading, 
+        // but we could use query params or hash if needed. 
+        // For now let's just keep it simple.
+    } else {
+        const newPath = `/manager/${store.currentProviderId}/${store.currentBucket}/files/${prefix}`;
+        window.history.pushState({ 
+            providerId: store.currentProviderId, 
+            name: store.currentBucket, 
+            prefix 
+        }, '', newPath);
+    }
+
+    await renderExplorerContent();
+}
+
+async function renderExplorerContent() {
+    console.log(`📂 Rendering Explorer: ${store.currentProviderId}/${store.currentBucket}, prefix: "${store.currentPrefix}"`);
+    const prefix = store.currentPrefix;
     selectedObjects.clear();
     updateBulkDeleteUI();
     
     const list = document.getElementById('fileList');
     const bread = document.getElementById('breadcrumbs');
     
+    if (!list || !bread) {
+        console.error('Explorer elements not found');
+        return;
+    }
+
     const parts = prefix.split('/').filter(p => p);
     let path = '';
-    bread.innerHTML = parts.map(p => {
+    bread.innerHTML = '';
+
+    parts.forEach(p => {
         path += p + '/';
-        return ` <span class="text-slate-300 dark:text-slate-600">/</span> <span class="cursor-pointer hover:text-rose-500 transition-colors" onclick="window.app.navigateExplorer('${path}')">${p}</span>`;
-    }).join('');
+        const currentPath = path;
+        const span = document.createElement('span');
+        span.innerHTML = ` <span class="text-slate-300 dark:text-slate-600">/</span> <span class="cursor-pointer hover:text-rose-500 transition-colors">${p}</span>`;
+        span.querySelector('.cursor-pointer').onclick = () => navigateExplorer(currentPath);
+        bread.appendChild(span);
+    });
 
     list.innerHTML = '<div class="text-center py-16 flex justify-center text-slate-400"><iconify-icon icon="line-md:loading-twotone-loop" width="40"></iconify-icon></div>';
     
     try {
         const items = await api.listObjects(store.currentProviderId, store.currentBucket, store.currentPrefix);
-        list.innerHTML = '';
-        document.getElementById('fileCount').innerText = `${items.length} items`;
         
+        if (items && items.error) {
+            throw new Error(items.error);
+        }
+
+        if (!Array.isArray(items)) {
+            throw new Error('Invalid response from server');
+        }
+
+        list.innerHTML = '';
+        const fileCountEl = document.getElementById('fileCount');
+        if (fileCountEl) fileCountEl.innerText = `${items.length} items`;
+        
+        console.log(`UI: Found ${items.length} items in bucket`);
+
         if(store.currentPrefix !== '') {
-            const parent = store.currentPrefix.split('/').slice(0, -2).join('/');
-            const parentPath = parent ? parent + '/' : '';
+            const parentParts = store.currentPrefix.split('/').filter(Boolean);
+            parentParts.pop();
+            const parentPath = parentParts.length > 0 ? parentParts.join('/') + '/' : '';
+            console.log(`UI: Adding back button to prefix: "${parentPath}"`);
+            
             const back = document.createElement('div');
             back.className = "flex items-center gap-4 p-2.5 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-xl cursor-pointer text-slate-500 mb-1 transition-all group";
             back.innerHTML = `
@@ -162,12 +176,18 @@ export async function navigateExplorer(prefix) {
             list.appendChild(back);
         }
 
-        if(!items.length) { 
-            list.innerHTML += '<div class="text-center py-20 flex flex-col items-center gap-4 text-slate-400 opacity-60"><iconify-icon icon="ph:folder-dashed-duotone" width="48"></iconify-icon><span class="text-sm font-medium tracking-tight">Empty folder</span></div>'; 
+        if(!items || items.length === 0) { 
+            console.log('UI: Folder is empty');
+            list.innerHTML = '<div class="text-center py-20 flex flex-col items-center gap-4 text-slate-400 opacity-60"><iconify-icon icon="ph:folder-dashed-duotone" width="48"></iconify-icon><span class="text-sm font-medium tracking-tight">Empty folder</span></div>'; 
             return; 
         }
 
-        items.filter(i => i.prefix).forEach(f => {
+        const folders = items.filter(i => i.prefix);
+        const files = items.filter(i => !i.prefix);
+        
+        console.log(`UI: Rendering ${folders.length} folders and ${files.length} files`);
+
+        folders.forEach(f => {
             const el = document.createElement('div');
             el.className = "flex items-center justify-between p-2.5 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-xl cursor-pointer group transition-all mb-1";
             el.onclick = () => navigateExplorer(f.prefix);
@@ -176,14 +196,14 @@ export async function navigateExplorer(prefix) {
                     <div class="aspect-square w-10 flex items-center justify-center bg-amber-500/10 text-amber-500 rounded-xl">
                         <iconify-icon icon="ph:folder-duotone" width="22"></iconify-icon>
                     </div>
-                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200 font-mono tracking-tight">${f.prefix.replace(store.currentPrefix, '').replace('/','')}</span>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200 font-mono tracking-tight">${f.prefix.split('/').filter(Boolean).pop()}</span>
                 </div>
                 <iconify-icon icon="ph:caret-right-bold" class="text-slate-300 group-hover:text-slate-500 transition-colors" width="16"></iconify-icon>
             `;
             list.appendChild(el);
         });
 
-        items.filter(i => !i.prefix).forEach(f => {
+        files.forEach(f => {
             const size = (f.size / 1024).toFixed(1) + ' KB';
             const name = f.name.replace(store.currentPrefix, '');
             const icon = getFileIcon(name);
@@ -196,8 +216,8 @@ export async function navigateExplorer(prefix) {
                     <div class="aspect-square w-10 flex items-center justify-center ${styles} rounded-xl transition-all group-hover:scale-105">
                         <iconify-icon icon="${icon}" width="22"></iconify-icon>
                     </div>
-                    <div class="flex flex-col min-w-0" onclick="window.app.openPreview('${store.currentProviderId}', '${store.currentBucket}', '${f.name}')">
-                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate font-mono tracking-tight cursor-pointer hover:text-rose-500">${name}</span>
+                    <div class="flex flex-col min-w-0 flex-grow cursor-pointer" onclick="window.app.openPreview('${store.currentProviderId}', '${store.currentBucket}', '${f.name}')">
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate font-mono tracking-tight hover:text-rose-500 transition-colors">${name}</span>
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${size}</span>
                     </div>
                 </div>
@@ -217,6 +237,113 @@ export async function navigateExplorer(prefix) {
         });
 
     } catch (err) { 
-        list.innerHTML = '<div class="text-center py-12 text-rose-500 text-sm font-medium">Failed to access content</div>'; 
+        console.error('Explorer error:', err);
+        list.innerHTML = `<div class="text-center py-12 text-rose-500 text-sm font-medium">Error: ${err.message}</div>`; 
+    }
+}
+
+// --- Helper Functions ---
+function getFileIcon(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    if(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'ph:image-duotone';
+    if(['mp4', 'webm', 'mov', 'mkv'].includes(ext)) return 'ph:video-duotone';
+    if(['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext)) return 'ph:music-notes-duotone';
+    if(ext === 'pdf') return 'ph:file-pdf-duotone';
+    if(ext === 'zip' || ext === 'rar' || ext === '7z') return 'ph:archive-duotone';
+    if(['js', 'ts', 'html', 'css', 'json', 'py', 'go', 'rs'].includes(ext)) return 'ph:file-code-duotone';
+    return 'ph:file-duotone';
+}
+
+function getIconStyles(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    if(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'bg-rose-500/10 text-rose-500';
+    if(['mp4', 'webm', 'mov', 'mkv'].includes(ext)) return 'bg-indigo-500/10 text-indigo-500';
+    if(['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext)) return 'bg-cyan-500/10 text-cyan-400';
+    if(ext === 'pdf') return 'bg-orange-500/10 text-orange-500';
+    if(ext === 'zip' || ext === 'rar' || ext === '7z') return 'bg-amber-500/10 text-amber-500';
+    if(['js', 'ts', 'html', 'css', 'json', 'py', 'go', 'rs'].includes(ext)) return 'bg-emerald-500/10 text-emerald-500';
+    return 'bg-slate-500/10 text-slate-500';
+}
+
+function updateBulkDeleteUI() {
+    const btn = document.getElementById('bulkDeleteBtn');
+    if (btn) {
+        if (selectedObjects.size > 0) {
+            btn.classList.remove('hidden');
+            btn.innerText = `Delete (${selectedObjects.size})`;
+        } else {
+            btn.classList.add('hidden');
+        }
+    }
+}
+
+// --- Exported Functions ---
+export function toggleSelect(name, e) {
+    if (e.target.checked) selectedObjects.add(name);
+    else selectedObjects.delete(name);
+    updateBulkDeleteUI();
+}
+
+export async function bulkDelete() {
+    if (selectedObjects.size === 0) return;
+    if (!confirm(`Delete ${selectedObjects.size} objects?`)) return;
+    
+    showToast(`Deleting ${selectedObjects.size} items...`, 'info');
+    const res = await api.deleteObjects(store.currentProviderId, store.currentBucket, Array.from(selectedObjects));
+    
+    if (res.error) showToast(res.error, 'error');
+    else {
+        showToast('Items deleted', 'success');
+        selectedObjects.clear();
+        await renderExplorerContent();
+    }
+}
+
+export async function downloadFile(providerId, bucket, name) {
+    try {
+        const { url } = await api.getUrl(providerId, bucket, name);
+        window.open(url, '_blank');
+    } catch (err) {
+        showToast('Download failed', 'error');
+    }
+}
+
+export async function handleUpload(files) {
+    if (!files.length) return;
+    showToast(`Uploading ${files.length} files...`, 'info');
+    try {
+        const res = await api.upload(store.currentProviderId, store.currentBucket, files, store.currentPrefix);
+        if (res.error) showToast(res.error, 'error');
+        else {
+            showToast('Upload complete', 'success');
+            await renderExplorerContent();
+        }
+    } catch (err) {
+        showToast('Upload failed', 'error');
+    }
+}
+
+export function openUrlModal(name) {
+    shareTarget = name;
+    document.getElementById('urlModal').classList.remove('hidden');
+}
+
+export function closeUrlModal() {
+    document.getElementById('urlModal').classList.add('hidden');
+    document.getElementById('generatedUrlContainer').classList.add('hidden');
+    shareTarget = null;
+}
+
+export async function generateShareLink() {
+    if (!shareTarget) return;
+    const expiry = document.getElementById('urlExpiry').value;
+    try {
+        const { url } = await api.getUrl(store.currentProviderId, store.currentBucket, shareTarget, expiry);
+        const input = document.getElementById('generatedUrl');
+        const container = document.getElementById('generatedUrlContainer');
+        input.value = url;
+        container.classList.remove('hidden');
+    } catch (err) {
+        showToast('Link generation failed', 'error');
     }
 }

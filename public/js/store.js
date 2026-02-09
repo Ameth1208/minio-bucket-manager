@@ -4,5 +4,6 @@ export const store = {
     currentProviderId: null,
     currentPrefix: '',
     bucketToDelete: null,
-    currentFilter: 'all' // 'all', 'local', 'aws', etc.
+    currentFilter: 'all', // 'all', 'minio', 'aws', etc.
+    isExplorerStandalone: false
 };

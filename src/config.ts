@@ -9,8 +9,8 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'secret',
   providers: [
     {
-      id: 'local',
-      name: 'Local MinIO',
+      id: 'minio',
+      name: 'MinIO',
       endPoint: process.env.MINIO_ENDPOINT || 'localhost',
       port: parseInt(process.env.MINIO_PORT || '9000'),
       useSSL: process.env.MINIO_USE_SSL === 'true',

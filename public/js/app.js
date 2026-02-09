@@ -135,18 +135,56 @@ function initSearch() {
         clearTimeout(searchTimeout);
         const query = e.target.value.trim();
         if(query.length < 2) { results.classList.add('hidden'); return; }
+        
+        results.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"><iconify-icon icon="line-md:loading-twotone-loop"></iconify-icon> Searching...</div>';
+        results.classList.remove('hidden');
+
         searchTimeout = setTimeout(async () => {
             const data = await api.search(query);
             if (!data || data.error) return;
             results.innerHTML = '';
             results.classList.remove('hidden');
-            data.forEach(item => {
-                const el = document.createElement('div');
-                el.className = "flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-dark-700 cursor-pointer rounded-xl border-b border-slate-100 dark:border-dark-700 last:border-0 group";
-                el.innerHTML = `<div class="bg-rose-500/10 text-rose-500 p-2 rounded-lg group-hover:bg-rose-500 group-hover:text-white transition-all"><iconify-icon icon="ph:file-bold" width="18"></iconify-icon></div><div class="flex flex-col min-w-0"><span class="text-xs font-bold truncate text-slate-700 dark:text-slate-200">${item.name}</span><span class="text-[9px] text-slate-400 font-mono uppercase tracking-tighter">${item.providerId} / ${item.bucket}</span></div>`;
-                el.onclick = () => { results.classList.add('hidden'); input.value = ''; openExplorer(item.providerId, item.bucket); openPreview(item.providerId, item.bucket, item.name); };
-                results.appendChild(el);
-            });
+
+            if (data.length === 0) {
+                results.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No results found</div>';
+            } else {
+                data.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = "flex items-center justify-between p-2.5 hover:bg-slate-50 dark:hover:bg-dark-700 cursor-pointer rounded-xl border-b border-slate-100 dark:border-dark-700 last:border-0 group";
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0 flex-grow search-clickable">
+                            <div class="bg-rose-500/10 text-rose-500 p-2 rounded-lg group-hover:bg-rose-500 group-hover:text-white transition-all">
+                                <iconify-icon icon="ph:file-bold" width="18"></iconify-icon>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-xs font-bold truncate text-slate-700 dark:text-slate-200">${item.name}</span>
+                                <span class="text-[9px] text-slate-400 font-mono uppercase tracking-tighter">${item.providerId} / ${item.bucket}</span>
+                            </div>
+                        </div>
+                        <button class="p-2 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all search-new-win" title="Open in new window">
+                            <iconify-icon icon="ph:arrow-square-out-bold" width="18"></iconify-icon>
+                        </button>
+                    `;
+                    
+                    const itemClick = el.querySelector('.search-clickable');
+                    itemClick.onclick = () => {
+                        results.classList.add('hidden'); 
+                        input.value = ''; 
+                        const prefix = item.name.includes('/') ? item.name.substring(0, item.name.lastIndexOf('/') + 1) : '';
+                        window.app.openExplorer(item.providerId, item.bucket, prefix);
+                        window.app.openPreview(item.providerId, item.bucket, item.name);
+                    };
+    
+                    const newWinBtn = el.querySelector('.search-new-win');
+                    newWinBtn.onclick = (ev) => {
+                        ev.stopPropagation();
+                        results.classList.add('hidden');
+                        window.open(`/explorer/${item.providerId}/${item.bucket}`, '_blank');
+                    };
+    
+                    results.appendChild(el);
+                });
+            }
         }, 300);
     });
 }
@@ -156,21 +194,73 @@ window.app = {
     loadData, openExplorer, closeExplorer, navigateExplorer, downloadFile, handleUpload,
     toggleSelect, bulkDelete, openUrlModal, closeUrlModal, generateShareLink,
     openDeleteModal, closeDeleteModal, confirmDelete, openPreview, closePreview,
-    setLanguage, toggleTheme, refreshStats, translateError, setFilter, api
+    setLanguage, toggleTheme, refreshStats, translateError, setFilter, api, showToast
 };
 
-initTheme();
+function handleRouting() {
+    const path = window.location.pathname;
+    const parts = path.split('/');
+    if (parts[1] === 'manager' && parts.length >= 5 && parts[4] === 'files') {
+        const providerId = parts[2];
+        const bucket = parts[3];
+        const prefix = parts.slice(5).join('/');
+        window.app.openExplorer(providerId, bucket, prefix, false, true);
+    } else if (path === '/manager') {
+        const listView = document.getElementById('bucketListView');
+        const explorerView = document.getElementById('explorerView');
+        if (listView && explorerView) {
+            listView.classList.remove('hidden');
+            explorerView.classList.add('hidden');
+        }
+    }
+}
+
+window.addEventListener('popstate', handleRouting);
+
+console.log('app.js script loaded');
+
 document.addEventListener('DOMContentLoaded', () => {
-    initLanguage();
-    renderLanguageSelector('langSelectorContainer');
-    renderSupportButton();
-    initSearch();
-    if (document.getElementById('loginForm')) initLoginForm(); else loadData();
+    console.log('DOM Content Loaded - App initialization started');
+    
+    try {
+        initTheme();
+        console.log('Theme initialized');
+        initLanguage();
+        console.log('Language initialized');
+        renderLanguageSelector('langSelectorContainer');
+        console.log('Language selector rendered');
+        renderSupportButton();
+        console.log('Support button rendered');
+    } catch (err) {
+        console.error('Error during global init:', err);
+    }
+    
+    const loginForm = document.getElementById('loginForm');
+    const isLogin = !!loginForm;
+    const isExplorer = window.location.pathname.startsWith('/explorer');
+    
+    console.log('Page context:', { isLogin, isExplorer, path: window.location.pathname });
+    
+    if (isLogin) {
+        console.log('Initializing Login Form...');
+        initLoginForm();
+    } else if (isExplorer) {
+        console.log('Standing by for Explorer init (handled in explorer.html)');
+    } else {
+        console.log('Initializing Manager...');
+        initSearch();
+        loadData();
+        handleRouting(); // Check initial route
+    }
+    
+    // Global event listeners
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
     document.getElementById('logoutBtn')?.addEventListener('click', api.logout);
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', confirmDelete);
     document.getElementById('createBucketForm')?.addEventListener('submit', createBucket);
+    
     window.addEventListener('languageChanged', () => {
-        if(store.buckets.length > 0) renderBuckets(store.buckets);
+        if(store.buckets && store.buckets.length > 0) renderBuckets(store.buckets);
     });
+    console.log('App initialization finished');
 });

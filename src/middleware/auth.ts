@@ -19,7 +19,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
     if (!token) {
         // If API request, return 401. If Page request, redirect to login.
-        if (req.path.startsWith('/api')) {
+        if (req.originalUrl.startsWith('/api')) {
              res.status(401).json({ error: 'Unauthorized' });
              return;
         } else {
@@ -33,7 +33,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
         req.user = payload;
         next();
     } catch (err) {
-        if (req.path.startsWith('/api')) {
+        if (req.originalUrl.startsWith('/api')) {
              res.status(401).json({ error: 'Invalid token' });
              return;
         } else {

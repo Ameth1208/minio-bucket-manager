@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { dark: { 950: '#020617', 900: '#0f172a', 800: '#1e293b', 700: '#334155' } }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="https://api.iconify.design/simple-icons:minio.svg?color=%23f43f5e">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        .theme-transition { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-[#fcfcfd] dark:bg-dark-950 text-slate-800 dark:text-slate-200 theme-transition min-h-screen flex flex-col font-sans">
+
+    <nav class="bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-dark-800 sticky top-0 z-40">
+        <div class="container mx-auto px-4 md:px-6 py-3.5 flex justify-between items-center">
+            <div class="flex items-center gap-2.5">
+                <a href="/manager" class="bg-rose-500 p-2 rounded-xl text-white flex items-center justify-center hover:scale-105 transition-transform">
+                    <iconify-icon icon="ph:arrow-left-bold" width="22"></iconify-icon>
+                </a>
+                <div class="flex flex-col">
+                    <span class="text-base font-bold dark:text-white leading-tight" id="explorerTitle">Loading...</span>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">File Explorer</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                 <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-mono overflow-x-auto max-w-xs whitespace-nowrap hidden md:flex">
+                    <span class="cursor-pointer hover:text-indigo-500" onclick="window.app.navigateExplorer('')">root</span>
+                    <span id="breadcrumbs"></span>
+                </div>
+                <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors">
+                    <iconify-icon icon="ph:moon-bold" class="dark:hidden" width="20"></iconify-icon>
+                    <iconify-icon icon="ph:sun-bold" class="hidden dark:block text-yellow-400" width="20"></iconify-icon>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 md:px-6 py-6 flex-grow flex flex-col max-w-6xl">
+        <div class="bg-white dark:bg-dark-900 rounded-xl shadow-sm border border-slate-200 dark:border-dark-800 flex flex-col flex-grow overflow-hidden">
+            <div class="p-4 border-b border-slate-100 dark:border-dark-800 flex justify-between items-center">
+                <div class="flex items-center gap-2 md:hidden">
+                    <span class="text-xs font-mono text-slate-500">Path: /</span>
+                    <span id="mobileBreadcrumbs" class="text-xs font-mono truncate max-w-[150px]"></span>
+                </div>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button onclick="document.getElementById('fileUploadInput').click()" class="bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-rose-600/20 transition-all active:scale-95">
+                        <iconify-icon icon="ph:upload-simple-bold" width="18"></iconify-icon>
+                        <span>Upload</span>
+                    </button>
+                    <input type="file" id="fileUploadInput" multiple class="hidden" onchange="window.app.handleUpload(this.files)">
+                </div>
+            </div>
+            
+            <div id="fileList" class="flex-grow overflow-y-auto p-4"></div>
+
+            <div class="p-4 border-t border-slate-100 dark:border-dark-800 bg-slate-50/50 dark:bg-dark-800/50 flex justify-between items-center text-xs text-slate-400">
+                <div class="flex gap-4">
+                    <span>Secure Access</span>
+                    <button id="bulkDeleteBtn" class="text-rose-500 font-bold hidden hover:underline" onclick="window.app.bulkDelete()">Delete Selected</button>
+                </div>
+                <span id="fileCount">0 items</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals copied from manager.html -->
+    <!-- URL Expiry Modal -->
+    <div id="urlModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="window.app.closeUrlModal()"></div>
+        <div class="relative bg-white dark:bg-dark-900 w-full max-w-sm rounded-xl border border-slate-200 dark:border-dark-800 p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 dark:text-white">Share File</h3>
+            <p class="text-xs text-slate-500 mb-4">Generate a temporary download link.</p>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Expiration Time</label>
+            <select id="urlExpiry" class="w-full bg-slate-100 dark:bg-dark-800 border-none rounded-lg px-4 py-2.5 text-sm outline-none mb-6">
+                <option value="60">1 Minute</option>
+                <option value="3600" selected>1 Hour</option>
+                <option value="86400">24 Hours</option>
+                <option value="604800">7 Days</option>
+            </select>
+            <div class="flex gap-3">
+                <button onclick="window.app.closeUrlModal()" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-slate-100 dark:bg-dark-800">Cancel</button>
+                <button onclick="window.app.generateShareLink()" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-rose-600 text-white">Generate</button>
+            </div>
+
+            <div id="generatedUrlContainer" class="mt-6 hidden animate-fade-in">
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Generated Link</label>
+                <div class="flex gap-2">
+                    <input type="text" id="generatedUrl" readonly class="flex-grow bg-slate-100 dark:bg-dark-800 border-none rounded-lg px-3 py-2 text-xs font-mono outline-none">
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('generatedUrl').value); window.app.showToast('Copied!')" class="aspect-square w-9 flex items-center justify-center bg-indigo-500 text-white rounded-lg">
+                        <iconify-icon icon="ph:copy-bold"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="window.app.closePreview()"></div>
+        <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col items-center">
+            <div class="w-full flex justify-end mb-4 gap-4">
+                <a id="previewDownloadBtn" href="#" target="_blank" class="text-white hover:text-indigo-400 flex items-center gap-2 text-sm font-bold bg-white/10 px-4 py-2 rounded-lg"><iconify-icon icon="ph:download-bold"></iconify-icon> Download</a>
+                <button onclick="window.app.closePreview()" class="text-white hover:text-rose-500 bg-white/10 px-3 py-2 rounded-lg"><iconify-icon icon="ph:x-bold" width="20"></iconify-icon></button>
+            </div>
+            <div id="previewContent" class="rounded-xl overflow-hidden flex items-center justify-center w-full h-full"></div>
+            <p id="previewName" class="text-slate-400 text-sm mt-4 font-mono"></p>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] transform transition-all duration-500 translate-y-20 opacity-0">
+        <div class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <div id="toastIcon"></div>
+            <span id="toastMessage" class="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-tight"></span>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initTheme, toggleTheme, showToast } from './js/utils.js';
+        import { openExplorer, navigateExplorer, downloadFile, handleUpload, toggleSelect, bulkDelete, openUrlModal, closeUrlModal, generateShareLink } from './js/components/Explorer.js';
+        import { openPreview, closePreview } from './js/components/Modals.js';
+        import { store } from './js/store.js';
+
+        window.app = {
+            navigateExplorer, downloadFile, handleUpload,
+            toggleSelect, bulkDelete, openUrlModal, closeUrlModal, generateShareLink,
+            openPreview, closePreview, toggleTheme, showToast
+        };
+
+        initTheme();
+        document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const pathParts = window.location.pathname.split('/');
+            // Expected: /explorer/:providerId/:bucket
+            if (pathParts.length >= 4) {
+                const providerId = pathParts[2];
+                const bucket = pathParts[3];
+                openExplorer(providerId, bucket, '', true); // Pass true to indicate standalone mode
+            }
+        });
+    </script>
+</body>
+</html>

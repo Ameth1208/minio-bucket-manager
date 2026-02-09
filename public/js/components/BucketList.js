@@ -42,8 +42,16 @@ export function renderBuckets(buckets) {
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">${b.providerName}</span>
                 </div>
                 <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="window.app.openExplorer('${b.providerId}', '${b.name}')" class="p-2 text-slate-400 hover:text-indigo-500 transition-colors"><iconify-icon icon="ph:magnifying-glass-bold" width="20"></iconify-icon></button>
-                    <button onclick="window.app.openDeleteModal('${b.providerId}', '${b.name}')" class="p-2 text-slate-400 hover:text-rose-500 transition-colors"><iconify-icon icon="ph:trash-simple-bold" width="20"></iconify-icon></button>
+                    <button onclick="console.log('Click Open:', '${b.providerId}', '${b.name}'); window.app.openExplorer('${b.providerId}', '${b.name}')" class="flex items-center gap-1 px-2 py-1 text-slate-400 hover:text-indigo-500 transition-colors" title="Open Explorer">
+                        <iconify-icon icon="ph:folder-open-bold" width="20"></iconify-icon>
+                        <span class="text-[10px] font-bold uppercase">Open</span>
+                    </button>
+                    <button onclick="window.open('/explorer/${b.providerId}/${b.name}', '_blank')" class="p-2 text-slate-400 hover:text-rose-500 transition-colors" title="Open in new window">
+                        <iconify-icon icon="ph:arrow-square-out-bold" width="20"></iconify-icon>
+                    </button>
+                    <button onclick="window.app.openDeleteModal('${b.providerId}', '${b.name}')" class="p-2 text-slate-400 hover:text-rose-500 transition-colors" title="Delete Bucket">
+                        <iconify-icon icon="ph:trash-simple-bold" width="20"></iconify-icon>
+                    </button>
                 </div>
             </div>
             <div class="mb-5">

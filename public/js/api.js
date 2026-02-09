@@ -1,5 +1,5 @@
 const handleResponse = async (res) => {
-    if (res.status === 401) {
+    if (res.status === 401 && !res.url.endsWith('/api/login')) {
         window.location.href = '/login';
         return { error: 'Unauthorized' };
     }
